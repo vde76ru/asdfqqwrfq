@@ -1,0 +1,46 @@
+
+{% extends "base.html" %}
+
+{% block title %}Новости и Сигналы - Crypto Trading Bot{% endblock %}
+
+{% block content %}
+<h1 class="mb-4"><i class="fas fa-newspaper"></i> Новости и Социальные сигналы</h1>
+<div class="row">
+    <!-- News Section -->
+    <div class="col-lg-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-rss"></i> Последние новости</h5>
+            </div>
+            <div class="card-body">
+                <div id="news-loading" class="text-center py-5">
+                    <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+                <div id="news-container" class="news-container" style="display: none;"></div>
+            </div>
+        </div>
+    </div>
+    <!-- Social Signals Section -->
+    <div class="col-lg-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-share-alt"></i> Социальные сигналы</h5>
+            </div>
+            <div class="card-body">
+                <div id="social-loading" class="text-center py-5">
+                    <div class="spinner-border text-info" style="width: 3rem; height: 3rem;" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+                <div id="social-container" class="social-container" style="display: none;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/news.js') }}" defer></script>
+{% endblock %}
