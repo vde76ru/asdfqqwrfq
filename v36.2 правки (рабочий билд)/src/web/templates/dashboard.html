@@ -1,0 +1,211 @@
+<!-- /src/web/templates/dashboard.html -->
+
+{% extends "base.html" %}
+
+{% block title %}Дашборд - Crypto Trading Bot{% endblock %}
+
+{% block content %}
+<h1 class="h3 mb-4">Панель управления</h1>
+
+<!-- Статус и управление -->
+<div class="row mb-4">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Статус системы</h5>
+                <div id="bot-status-indicator">
+                    <i class="fas fa-circle text-danger"></i>
+                    <span id="bot-status-text">Остановлен</span>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <button id="btn-start" class="btn btn-success btn-lg w-100">
+                            <i class="fas fa-play"></i> Запустить бота
+                        </button>
+                    </div>
+                    <div class="col-md-6">
+                        <button id="btn-stop" class="btn btn-danger btn-lg w-100" disabled>
+                            <i class="fas fa-stop"></i> Остановить бота
+                        </button>
+                    </div>
+                </div>
+                <div class="mt-3" id="system-info">
+                    <small class="text-muted">
+                        Активных пар: <span id="active-pairs-count">0</span> | 
+                        Открытых позиций: <span id="open-positions-count">0</span> |
+                        Циклов анализа: <span id="cycles-count">0</span>
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Баланс USDT</h5>
+            </div>
+            <div class="card-body text-center">
+                <h2 id="balance-display" class="text-primary">$0.00</h2>
+                <div class="small text-muted">
+                    Доступно: $<span id="available-balance">0.00</span><br>
+                    В позициях: $<span id="locked-balance">0.00</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Основные метрики -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="text-muted">Прибыль сегодня</h5>
+                <h3 id="today-profit" class="mb-0">$0.00</h3>
+                <small id="today-profit-percent" class="text-success">0.00%</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="text-muted">Сделок сегодня</h5>
+                <h3 id="today-trades" class="mb-0">0</h3>
+                <small class="text-muted">Win rate: <span id="today-winrate">0%</span></small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="text-muted">Общая прибыль</h5>
+                <h3 id="total-profit" class="mb-0">$0.00</h3>
+                <small id="total-profit-percent" class="text-success">0.00%</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="text-muted">Активных валют</h5>
+                <h3 id="active-currencies" class="mb-0">0</h3>
+                <small class="text-muted">из <span id="total-currencies">30</span></small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Активные позиции -->
+<div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Активные позиции</h5>
+        <button class="btn btn-sm btn-outline-primary" onclick="dashboardManager.refreshPositions()">
+            <i class="fas fa-sync"></i> Обновить
+        </button>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Пара</th>
+                        <th>Тип</th>
+                        <th>Размер</th>
+                        <th>Цена входа</th>
+                        <th>Текущая цена</th>
+                        <th>P&L</th>
+                        <th>P&L %</th>
+                        <th>Стратегия</th>
+                        <th>Время</th>
+                    </tr>
+                </thead>
+                <tbody id="positions-table">
+                    <tr><td colspan="9" class="text-center">Нет активных позиций</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- График баланса и топ валюты -->
+<div class="row mb-4">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">График баланса (24ч)</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="balance-chart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Топ активные валюты</h5>
+            </div>
+            <div class="card-body">
+                <div id="top-currencies-list">
+                    <div class="text-center text-muted">Загрузка...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Последние сделки -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">Последние сделки</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-sm">
+                <thead>
+                    <tr>
+                        <th>Время</th>
+                        <th>Пара</th>
+                        <th>Тип</th>
+                        <th>Цена</th>
+                        <th>Размер</th>
+                        <th>Прибыль</th>
+                        <th>Статус</th>
+                        <th>Стратегия</th>
+                    </tr>
+                </thead>
+                <tbody id="recent-trades-table">
+                    <tr><td colspan="8" class="text-center">Нет сделок</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Мониторинг основных валют</h5>
+        <div>
+            <select class="form-select form-select-sm d-inline-block w-auto" id="multi-chart-interval">
+                <option value="5000">5 сек</option>
+                <option value="10000">10 сек</option>
+                <option value="30000">30 сек</option>
+            </select>
+            <button class="btn btn-sm btn-outline-primary ms-2" onclick="multiCharts.updateAllCharts()">
+                <i class="fas fa-sync"></i>
+            </button>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="row" id="multi-charts-container">
+            <!-- Графики добавляются через multi_charts.js -->
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+<script src="{{ url_for('static', filename='js/multi_charts.js') }}"></script>
+{% endblock %}
