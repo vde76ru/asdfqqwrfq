@@ -1,0 +1,167 @@
+<!-- /src/web/templates/signals.html -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Торговые сигналы - Crypto Trading System</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/static/css/signals.css">
+    
+    <style>
+        body {
+            background-color: #0a0a0a;
+            color: #ffffff;
+        }
+    </style>
+</head>
+<body>
+    <!-- Навигация -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-chart-line"></i> Crypto Signal System
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link active" href="/signals">Сигналы</a>
+                <a class="nav-link" href="/dashboard">Дашборд</a>
+                <a class="nav-link" href="/analytics">Аналитика</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-4">
+        <!-- Фильтры -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <select class="form-select" id="symbolFilter">
+                    <option value="">Все пары</option>
+                    <option value="BTCUSDT">BTCUSDT</option>
+                    <option value="ETHUSDT">ETHUSDT</option>
+                    <option value="BNBUSDT">BNBUSDT</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select class="form-select" id="moduleFilter">
+                    <option value="">Все стратегии</option>
+                    <option value="whale">Охота на китов</option>
+                    <option value="sleeping">Спящие гиганты</option>
+                    <option value="orderbook">Анализ стакана</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select class="form-select" id="timeFilter">
+                    <option value="1">Последний час</option>
+                    <option value="4">Последние 4 часа</option>
+                    <option value="24" selected>Последние 24 часа</option>
+                    <option value="168">Последняя неделя</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <button class="btn btn-primary w-100" onclick="refreshSignals()">
+                    <i class="fas fa-sync"></i> Обновить
+                </button>
+            </div>
+        </div>
+
+        <!-- Статистика -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h5 class="card-title">Всего сигналов</h5>
+                        <h2 class="text-primary" id="totalSignals">0</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h5 class="card-title">Высокая уверенность</h5>
+                        <h2 class="text-success" id="highConfidence">0</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h5 class="card-title">Активных пар</h5>
+                        <h2 class="text-info" id="activePairs">0</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h5 class="card-title">Лучшая пара</h5>
+                        <h2 class="text-warning" id="bestPair">-</h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Таблица сигналов -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-signal"></i> Торговые сигналы
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-dark table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Символ</th>
+                                        <th>Итоговый сигнал</th>
+                                        <th>Сила сигнала</th>
+                                        <th>Buy</th>
+                                        <th>Sell</th>
+                                        <th>Neutral</th>
+                                        <th>Активные стратегии</th>
+                                        <th>Тренд</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="signalsBody">
+                                    <tr>
+                                        <td colspan="8" class="text-center">Загрузка сигналов...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Альтернативный вид: Карточки сигналов -->
+        <div class="row mt-4" style="display: none;">
+            <div class="col-12">
+                <h3>🎯 Лучшие сигналы</h3>
+                <div id="aggregatedSignals" class="row"></div>
+            </div>
+        </div>
+        
+        <div class="row mt-4" style="display: none;">
+            <div class="col-12">
+                <h3>📊 Все сигналы</h3>
+                <div id="allSignals" class="row"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно для деталей (создается динамически) -->
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Наш JavaScript -->
+    <script src="/static/js/signals.js"></script>
+</body>
+</html>
