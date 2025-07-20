@@ -1,0 +1,184 @@
+<!-- /src/web/templates/charts.html -->
+{% extends "base.html" %}
+
+{% block title %}Графики - Crypto Trading Bot{% endblock %}
+
+{% block head %}
+<style>
+    .indicator-value { font-size: 1.2em; font-weight: bold; }
+    .real-time-badge { display: inline-block; width: 10px; height: 10px; background: var(--accent-green); border-radius: 50%; margin-left: 10px; animation: pulse 2s infinite; }
+    @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
+    
+    /* Стили для мультивалютных графиков */
+    #multi-charts-container { margin-top: 20px; }
+    #multi-charts-container .card { box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: transform 0.2s; }
+    #multi-charts-container .card:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.15); }
+    #multi-charts-container .card-header { background-color: #f8f9fa; border-bottom: 2px solid #e9ecef; padding: 10px 15px; }
+    #multi-charts-container .price-info { font-size: 14px; }
+    #multi-charts-container .current-price { font-weight: bold; margin-right: 10px; }
+    #multi-charts-container .price-change { font-size: 12px; }
+    .chart-controls { margin-bottom: 20px; padding: 15px; background-color: #f8f9fa; border-radius: 5px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Панель управления -->
+<div class="card mb-4">
+    <div class="card-body d-flex align-items-center flex-wrap gap-3">
+        <div class="d-flex align-items-center">
+            <select id="symbolSelector" class="form-select" style="width: auto;">
+                <option value="BTCUSDT" selected>BTC/USDT</option>
+                <option value="ETHUSDT">ETH/USDT</option>
+                <option value="BNBUSDT">BNB/USDT</option>
+                <option value="SOLUSDT">SOL/USDT</option>
+            </select>
+            <span class="real-time-badge" title="Real-time данные"></span>
+        </div>
+        <div class="ms-auto">
+            <button id="refreshBtn" class="btn btn-outline-primary"><i class="fas fa-sync-alt"></i> Обновить</button>
+        </div>
+    </div>
+</div>
+
+<!-- Панель индикаторов -->
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="row text-center gy-3">
+            <div class="col"><div class="text-muted">Цена</div><div class="indicator-value text-primary" id="currentPrice">-</div></div>
+            <div class="col"><div class="text-muted">Изм. 24ч</div><div class="indicator-value" id="priceChange">-</div></div>
+            <div class="col"><div class="text-muted">Объем 24ч</div><div class="indicator-value" id="volume24h">-</div></div>
+            <div class="col"><div class="text-muted">Баланс</div><div class="indicator-value text-warning" id="totalBalance">-</div></div>
+            <div class="col"><div class="text-muted">P&L сегодня</div><div class="indicator-value" id="pnlToday">-</div></div>
+            <div class="col"><div class="text-muted">Активные позиции</div><div class="indicator-value" id="activePositions">-</div></div>
+        </div>
+    </div>
+</div>
+
+<!-- Мультивалютный выбор -->
+<div class="card mb-4" id="currency-selector-card">
+    <div class="card-header">
+        <h5 class="mb-0">Выбор валют для отслеживания</h5>
+    </div>
+    <div class="card-body">
+        <div class="row" id="currency-checkboxes">
+            <!-- Заполняется динамически -->
+        </div>
+        <div class="mt-3">
+            <button class="btn btn-primary" onclick="chartsManager.updateSelectedCurrencies()">
+                <i class="fas fa-check"></i> Применить выбор
+            </button>
+            <button class="btn btn-secondary" onclick="chartsManager.selectAllCurrencies()">
+                <i class="fas fa-check-double"></i> Выбрать все
+            </button>
+            <button class="btn btn-outline-secondary" onclick="chartsManager.deselectAllCurrencies()">
+                <i class="fas fa-times"></i> Снять все
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Мультивалютные графики -->
+<div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Графики выбранных валют</h5>
+        <div>
+            <select class="form-select form-select-sm d-inline-block w-auto" id="chart-timeframe">
+                <option value="1m">1 мин</option>
+                <option value="5m" selected>5 мин</option>
+                <option value="15m">15 мин</option>
+                <option value="1h">1 час</option>
+                <option value="4h">4 часа</option>
+                <option value="1d">1 день</option>
+            </select>
+            <button class="btn btn-sm btn-outline-primary ms-2" onclick="chartsManager.refreshAllCharts()">
+                <i class="fas fa-sync"></i> Обновить все
+            </button>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="row" id="multi-charts-grid">
+            <!-- Графики добавляются динамически -->
+        </div>
+    </div>
+</div>
+
+<!-- Основной график TradingView -->
+<div class="row">
+    <div class="col-12 mb-4">
+        <div class="card">
+            <div class="card-body p-1" style="height: 500px;">
+                <div id="tradingview_chart" class="h-100"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Дополнительные графики -->
+<div class="row">
+    <div class="col-md-4 mb-4">
+        <div class="card chart-container h-100">
+            <div class="card-header"><h5><i class="fas fa-wallet text-success"></i> Баланс</h5></div>
+            <div class="card-body"><canvas id="balanceChart" height="250"></canvas></div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-4">
+        <div class="card chart-container h-100">
+            <div class="card-header"><h5><i class="fas fa-chart-pie text-warning"></i> Позиции</h5></div>
+            <div class="card-body"><canvas id="positionsChart" height="250"></canvas></div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-4">
+        <div class="card chart-container h-100">
+            <div class="card-header"><h5><i class="fas fa-history text-info"></i> Сделки</h5></div>
+            <div class="card-body table-responsive" style="max-height: 280px;">
+                <table class="table table-dark table-sm">
+                    <thead>
+                        <tr>
+                            <th>Время</th>
+                            <th>Пара</th>
+                            <th>Тип</th>
+                            <th>Цена</th>
+                            <th>P&L</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tradesTableBody"><tr><td colspan="5" class="text-center">Загрузка...</td></tr></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Контролы для мультивалютных графиков -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="chart-controls">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h5 class="mb-0">Мультивалютные графики</h5>
+                </div>
+                <div>
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-sm btn-outline-primary active" onclick="multiCharts.setUpdateInterval(5000)">5с</button>
+                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="multiCharts.setUpdateInterval(10000)">10с</button>
+                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="multiCharts.setUpdateInterval(30000)">30с</button>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-info ms-2" onclick="multiCharts.updateAllCharts()">
+                        <i class="fas fa-sync"></i> Обновить
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Контейнер для мультивалютных графиков -->
+<div class="row" id="multi-charts-container">
+    <!-- Графики будут добавлены динамически через JavaScript -->
+</div>
+{% endblock %}
+
+{% block scripts %}
+    <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+    <script src="{{ url_for('static', filename='js/charts.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/multi_charts.js') }}"></script>
+{% endblock %}
