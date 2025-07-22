@@ -1,0 +1,274 @@
+
+/**
+ * Стили для торгового дашборда Crypto Trading Bot v3.0
+ */
+
+/* Переменные */
+:root {
+    --bg-primary: #131722;
+    --bg-secondary: #1e222d;
+    --bg-tertiary: #2a2e39;
+    --text-primary: #d1d4dc;
+    --text-secondary: #787b86;
+    --border-color: #363a45;
+    --accent-green: #26a69a;
+    --accent-red: #ef5350;
+    --accent-blue: #2196f3;
+    --accent-yellow: #ffb74d;
+    --shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
+}
+
+/* Базовые стили */
+body[data-bs-theme="dark"] {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+}
+
+.card {
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow);
+}
+
+.card-header {
+    background-color: var(--bg-tertiary);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.table {
+    --bs-table-bg: var(--bg-secondary);
+    --bs-table-border-color: var(--border-color);
+    --bs-table-hover-bg: var(--bg-tertiary);
+}
+
+/* Статистические карточки */
+.stat-card {
+    border-left: 4px solid var(--border-color);
+    padding: 1rem;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+}
+.stat-card .stat-label {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+}
+.stat-card .stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+}
+
+/* Статус бота */
+.status-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-weight: 600;
+    border: 1px solid transparent;
+}
+.status-running {
+    background: rgba(38, 166, 154, 0.2);
+    color: var(--accent-green);
+    border-color: var(--accent-green);
+}
+.status-stopped {
+    background: rgba(239, 83, 80, 0.2);
+    color: var(--accent-red);
+    border-color: var(--accent-red);
+}
+.status-loading {
+    background: rgba(255, 183, 77, 0.2);
+    color: var(--accent-yellow);
+    border-color: var(--accent-yellow);
+}
+
+/* Кнопки управления */
+.control-btn {
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: all 0.2s ease;
+}
+.control-btn:hover {
+    transform: translateY(-2px);
+}
+.control-btn:disabled {
+    transform: none;
+}
+
+/* Таблицы */
+.trades-table {
+    background-color: var(--bg-secondary);
+    border-radius: 8px;
+    overflow: hidden;
+}
+.profit-positive { color: var(--accent-green); font-weight: 600; }
+.profit-negative { color: var(--accent-red); font-weight: 600; }
+
+/* Лоадер */
+.loading-spinner {
+    display: inline-block;
+    width: 1rem;
+    height: 1rem;
+    border: 2px solid var(--border-color);
+    border-radius: 50%;
+    border-top-color: var(--accent-blue);
+    animation: spin 1s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Уведомления */
+#notifications-container {
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    z-index: 1050;
+    width: 350px;
+}
+.notification {
+    background-color: var(--bg-tertiary);
+    color: var(--text-primary);
+    border-left: 4px solid var(--accent-blue);
+    padding: 15px;
+    margin-bottom: 10px;
+    border-radius: 4px;
+    box-shadow: var(--shadow);
+    animation: slideIn 0.3s ease, fadeOut 0.5s ease 4.5s forwards;
+}
+.notification.notification-success { border-color: var(--accent-green); }
+.notification.notification-error { border-color: var(--accent-red); }
+.notification.notification-info { border-color: var(--accent-blue); }
+.notification .notification-header { font-weight: bold; }
+
+@keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+@keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
+
+/* Графики */
+.chart-container {
+    background-color: var(--bg-secondary);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+.chart-container .chart-title {
+    color: var(--text-primary);
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+/* Скроллбары */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: var(--bg-secondary); }
+::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-secondary); }
+
+/* Новости и сигналы */
+.news-item:hover, .social-signal:hover { box-shadow: 0 4px 8px rgba(0,0,0,0.2); transform: translateY(-2px); }
+.news-item, .social-signal { transition: all 0.2s ease-in-out; }
+.new-item-highlight { animation: highlight 3s ease-out; }
+@keyframes highlight { from { background-color: var(--bs-warning-bg-subtle); } to { background-color: transparent; } }
+.impact-score { color: #ffc107; }
+.news-container, .social-container { max-height: 75vh; overflow-y: auto; }
+
+/* Аналитика */
+.metric-card { transition: transform 0.2s; }
+.metric-card:hover { transform: translateY(-3px); box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+.metric-value { font-size: 2.2em; font-weight: bold; margin: 5px 0; }
+.metric-label { color: var(--text-secondary); text-transform: uppercase; font-size: 0.9em; }
+.ml-score { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; font-weight: bold; color: white; }
+.ml-score.high { background: var(--accent-green); }
+.ml-score.medium { background: var(--accent-yellow); color: black; }
+.ml-score.low { background: var(--accent-red); }
+
+/* ===== МУЛЬТИВАЛЮТНЫЕ ГРАФИКИ ===== */
+#multi-charts-container {
+    margin-top: 20px;
+}
+
+#multi-charts-container .card {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: transform 0.2s;
+}
+
+#multi-charts-container .card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+#multi-charts-container .card-header {
+    background-color: #f8f9fa;
+    border-bottom: 2px solid #e9ecef;
+    padding: 10px 15px;
+}
+
+#multi-charts-container .price-info {
+    font-size: 14px;
+}
+
+#multi-charts-container .current-price {
+    font-weight: bold;
+    margin-right: 10px;
+}
+
+#multi-charts-container .price-change {
+    font-size: 12px;
+}
+
+#multi-charts-container .price-change.text-success {
+    color: #28a745 !important;
+}
+
+#multi-charts-container .price-change.text-danger {
+    color: #dc3545 !important;
+}
+
+/* Контролы для графиков */
+.chart-controls {
+    margin-bottom: 20px;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 5px;
+}
+
+.chart-controls .btn-group {
+    margin-right: 10px;
+}
+
+.symbol-selector {
+    display: inline-block;
+    margin-right: 15px;
+}
+
+.symbol-selector .form-check {
+    display: inline-block;
+    margin-right: 15px;
+}
+
+/* Анимация загрузки */
+.chart-loading {
+    position: relative;
+    min-height: 200px;
+}
+
+.chart-loading::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 40px;
+    height: 40px;
+    margin: -20px 0 0 -20px;
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #3498db;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
