@@ -1,0 +1,1535 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analytics Dashboard - Trading System</title>
+    
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- ApexCharts for advanced visualizations -->
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    
+    <style>
+        :root {
+            --bg-primary: #0a0e27;
+            --bg-secondary: #151a3a;
+            --bg-card: #1a1f3a;
+            --bg-hover: #232849;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a9c9;
+            --success: #00ff88;
+            --danger: #ff3860;
+            --warning: #ffdd57;
+            --info: #3273dc;
+            --purple: #b362ff;
+            --orange: #ff8866;
+            --cyan: #00d4ff;
+        }
+        
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        
+        /* Page Header */
+        .page-header {
+            background: var(--bg-card);
+            padding: 30px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 30px;
+        }
+        
+        .page-title {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        
+        .page-subtitle {
+            color: var(--text-secondary);
+            font-size: 16px;
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        
+        /* Time Period Selector */
+        .time-selector {
+            display: flex;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            padding: 4px;
+        }
+        
+        .time-btn {
+            padding: 8px 16px;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            font-size: 14px;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+        
+        .time-btn.active {
+            background: var(--info);
+            color: white;
+        }
+        
+        .time-btn:hover {
+            color: var(--text-primary);
+        }
+        
+        /* Main Container */
+        .dashboard-container {
+            padding: 0 30px 30px;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+        
+        /* KPI Cards */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .kpi-card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 25px;
+            border: 1px solid rgba(255,255,255,0.05);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .kpi-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--info);
+        }
+        
+        .kpi-card.success::before { background: var(--success); }
+        .kpi-card.danger::before { background: var(--danger); }
+        .kpi-card.warning::before { background: var(--warning); }
+        .kpi-card.purple::before { background: var(--purple); }
+        
+        .kpi-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+        
+        .kpi-title {
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .kpi-icon {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            font-size: 20px;
+            background: rgba(255,255,255,0.05);
+        }
+        
+        .kpi-value {
+            font-size: 32px;
+            font-weight: 700;
+            line-height: 1;
+            margin-bottom: 10px;
+        }
+        
+        .kpi-change {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 14px;
+        }
+        
+        .kpi-chart {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 100px;
+            height: 40px;
+            opacity: 0.3;
+        }
+        
+        /* Chart Cards */
+        .chart-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .chart-card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 25px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        
+        .chart-card.full-width {
+            grid-column: 1 / -1;
+        }
+        
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .chart-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+        
+        .chart-options {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .chart-option-btn {
+            padding: 6px 12px;
+            background: var(--bg-secondary);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: var(--text-secondary);
+            border-radius: 6px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .chart-option-btn:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+        }
+        
+        .chart-container {
+            height: 300px;
+            position: relative;
+        }
+        
+        .chart-container.large {
+            height: 400px;
+        }
+        
+        /* Performance Table */
+        .performance-table {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+        
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .table th {
+            background: var(--bg-secondary);
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--text-secondary);
+            border-bottom: 2px solid var(--bg-primary);
+        }
+        
+        .table td {
+            padding: 15px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        
+        .table tr:hover {
+            background: var(--bg-hover);
+        }
+        
+        /* Strategy Performance Cards */
+        .strategy-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .strategy-card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        
+        .strategy-name {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+        
+        .strategy-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        .strategy-stat {
+            text-align: center;
+        }
+        
+        .strategy-stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+        
+        .strategy-stat-label {
+            color: var(--text-secondary);
+            font-size: 12px;
+        }
+        
+        /* Risk Metrics */
+        .risk-container {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+        
+        .risk-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .risk-item {
+            text-align: center;
+        }
+        
+        .risk-gauge {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 15px;
+        }
+        
+        .risk-label {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .risk-value {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+        
+        /* Loading State */
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 300px;
+        }
+        
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(255,255,255,0.1);
+            border-top-color: var(--info);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .chart-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .dashboard-container {
+                padding: 0 15px 15px;
+            }
+            
+            .page-header {
+                padding: 20px 15px;
+            }
+            
+            .kpi-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+            
+            .strategy-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.2);
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        
+        /* Navigation */
+        .nav-breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+        
+        .nav-breadcrumb a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        
+        .nav-breadcrumb a:hover {
+            color: var(--text-primary);
+        }
+        
+        .nav-breadcrumb .separator {
+            color: var(--text-secondary);
+        }
+    </style>
+</head>
+<body>
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="nav-breadcrumb">
+            <a href="enhanced_signals_matrix.html"><i class="fas fa-home"></i> Главная</a>
+            <span class="separator">/</span>
+            <span>Аналитика</span>
+        </div>
+        
+        <div class="d-flex justify-content-between align-items-start">
+            <div>
+                <h1 class="page-title">Аналитическая панель</h1>
+                <p class="page-subtitle">Комплексный анализ торговой деятельности и производительности стратегий</p>
+            </div>
+            
+            <div class="header-actions">
+                <div class="time-selector">
+                    <button class="time-btn" onclick="changeTimeframe('1D')">1Д</button>
+                    <button class="time-btn" onclick="changeTimeframe('1W')">1Н</button>
+                    <button class="time-btn active" onclick="changeTimeframe('1M')">1М</button>
+                    <button class="time-btn" onclick="changeTimeframe('3M')">3М</button>
+                    <button class="time-btn" onclick="changeTimeframe('1Y')">1Г</button>
+                    <button class="time-btn" onclick="changeTimeframe('ALL')">Все</button>
+                </div>
+                
+                <button class="btn btn-primary" onclick="exportAnalytics()">
+                    <i class="fas fa-download"></i> Экспорт отчета
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Main Dashboard Container -->
+    <div class="dashboard-container">
+        <!-- KPI Cards -->
+        <div class="kpi-grid">
+            <div class="kpi-card success">
+                <div class="kpi-header">
+                    <div>
+                        <div class="kpi-title">Общая прибыль</div>
+                        <div class="kpi-value" id="totalProfit">$0.00</div>
+                        <div class="kpi-change" style="color: var(--success);">
+                            <i class="fas fa-arrow-up"></i>
+                            <span>+15.8%</span>
+                        </div>
+                    </div>
+                    <div class="kpi-icon" style="color: var(--success);">
+                        <i class="fas fa-dollar-sign"></i>
+                    </div>
+                </div>
+                <canvas id="profitSparkline" class="kpi-chart"></canvas>
+            </div>
+            
+            <div class="kpi-card purple">
+                <div class="kpi-header">
+                    <div>
+                        <div class="kpi-title">Win Rate</div>
+                        <div class="kpi-value" id="winRate">0%</div>
+                        <div class="kpi-change" style="color: var(--purple);">
+                            <i class="fas fa-chart-line"></i>
+                            <span>Стабильно</span>
+                        </div>
+                    </div>
+                    <div class="kpi-icon" style="color: var(--purple);">
+                        <i class="fas fa-percentage"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="kpi-card warning">
+                <div class="kpi-header">
+                    <div>
+                        <div class="kpi-title">Всего сделок</div>
+                        <div class="kpi-value" id="totalTrades">0</div>
+                        <div class="kpi-change" style="color: var(--warning);">
+                            <i class="fas fa-exchange-alt"></i>
+                            <span id="activeTrades">0 активных</span>
+                        </div>
+                    </div>
+                    <div class="kpi-icon" style="color: var(--warning);">
+                        <i class="fas fa-handshake"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="kpi-card danger">
+                <div class="kpi-header">
+                    <div>
+                        <div class="kpi-title">Максимальная просадка</div>
+                        <div class="kpi-value" id="maxDrawdown">0%</div>
+                        <div class="kpi-change" style="color: var(--danger);">
+                            <i class="fas fa-arrow-down"></i>
+                            <span>Риск контролируется</span>
+                        </div>
+                    </div>
+                    <div class="kpi-icon" style="color: var(--danger);">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Chart Grid -->
+        <div class="chart-grid">
+            <!-- P&L Chart -->
+            <div class="chart-card full-width">
+                <div class="chart-header">
+                    <h3 class="chart-title">График прибыли и убытков (P&L)</h3>
+                    <div class="chart-options">
+                        <button class="chart-option-btn" onclick="togglePnLView('cumulative')">
+                            Накопительный
+                        </button>
+                        <button class="chart-option-btn" onclick="togglePnLView('daily')">
+                            По дням
+                        </button>
+                    </div>
+                </div>
+                <div class="chart-container large">
+                    <div id="pnlChart"></div>
+                </div>
+            </div>
+            
+            <!-- Trading Volume Chart -->
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h3 class="chart-title">Объем торговли</h3>
+                </div>
+                <div class="chart-container">
+                    <canvas id="volumeChart"></canvas>
+                </div>
+            </div>
+            
+            <!-- Asset Distribution -->
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h3 class="chart-title">Распределение по активам</h3>
+                </div>
+                <div class="chart-container">
+                    <div id="assetDistributionChart"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Strategy Performance -->
+        <div class="performance-table">
+            <div class="chart-header">
+                <h3 class="chart-title">Производительность стратегий</h3>
+                <button class="chart-option-btn" onclick="refreshStrategies()">
+                    <i class="fas fa-sync-alt"></i> Обновить
+                </button>
+            </div>
+            
+            <div class="strategy-grid" id="strategyGrid">
+                <!-- Dynamic strategy cards will be inserted here -->
+            </div>
+        </div>
+        
+        <!-- Detailed Performance Table -->
+        <div class="performance-table">
+            <div class="chart-header">
+                <h3 class="chart-title">Детальная статистика</h3>
+            </div>
+            
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Метрика</th>
+                        <th>Сегодня</th>
+                        <th>7 дней</th>
+                        <th>30 дней</th>
+                        <th>Все время</th>
+                    </tr>
+                </thead>
+                <tbody id="performanceTableBody">
+                    <tr>
+                        <td>Прибыль/Убыток</td>
+                        <td id="pnl-today">$0.00</td>
+                        <td id="pnl-week">$0.00</td>
+                        <td id="pnl-month">$0.00</td>
+                        <td id="pnl-all">$0.00</td>
+                    </tr>
+                    <tr>
+                        <td>Количество сделок</td>
+                        <td id="trades-today">0</td>
+                        <td id="trades-week">0</td>
+                        <td id="trades-month">0</td>
+                        <td id="trades-all">0</td>
+                    </tr>
+                    <tr>
+                        <td>Win Rate</td>
+                        <td id="winrate-today">0%</td>
+                        <td id="winrate-week">0%</td>
+                        <td id="winrate-month">0%</td>
+                        <td id="winrate-all">0%</td>
+                    </tr>
+                    <tr>
+                        <td>Средняя прибыль</td>
+                        <td id="avgwin-today">$0.00</td>
+                        <td id="avgwin-week">$0.00</td>
+                        <td id="avgwin-month">$0.00</td>
+                        <td id="avgwin-all">$0.00</td>
+                    </tr>
+                    <tr>
+                        <td>Средний убыток</td>
+                        <td id="avgloss-today">$0.00</td>
+                        <td id="avgloss-week">$0.00</td>
+                        <td id="avgloss-month">$0.00</td>
+                        <td id="avgloss-all">$0.00</td>
+                    </tr>
+                    <tr>
+                        <td>Profit Factor</td>
+                        <td id="pf-today">0.00</td>
+                        <td id="pf-week">0.00</td>
+                        <td id="pf-month">0.00</td>
+                        <td id="pf-all">0.00</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Risk Metrics -->
+        <div class="risk-container">
+            <div class="chart-header">
+                <h3 class="chart-title">Риск-метрики</h3>
+            </div>
+            
+            <div class="risk-grid">
+                <div class="risk-item">
+                    <div id="varGauge" class="risk-gauge"></div>
+                    <div class="risk-label">Value at Risk (VaR)</div>
+                    <div class="risk-value" id="varValue">0%</div>
+                </div>
+                
+                <div class="risk-item">
+                    <div id="sharpeGauge" class="risk-gauge"></div>
+                    <div class="risk-label">Sharpe Ratio</div>
+                    <div class="risk-value" id="sharpeValue">0.00</div>
+                </div>
+                
+                <div class="risk-item">
+                    <div id="exposureGauge" class="risk-gauge"></div>
+                    <div class="risk-label">Экспозиция</div>
+                    <div class="risk-value" id="exposureValue">0%</div>
+                </div>
+                
+                <div class="risk-item">
+                    <div id="correlationGauge" class="risk-gauge"></div>
+                    <div class="risk-label">Корреляция портфеля</div>
+                    <div class="risk-value" id="correlationValue">0.00</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Signals Effectiveness -->
+        <div class="chart-grid">
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h3 class="chart-title">Эффективность сигналов</h3>
+                </div>
+                <div class="chart-container">
+                    <div id="signalsEffectivenessChart"></div>
+                </div>
+            </div>
+            
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h3 class="chart-title">Временное распределение сделок</h3>
+                </div>
+                <div class="chart-container">
+                    <div id="timeDistributionChart"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
+    
+    <script>
+        // ==================== ANALYTICS DASHBOARD APPLICATION ====================
+        
+        class AnalyticsDashboard {
+            constructor() {
+                this.currentTimeframe = '1M';
+                this.charts = {};
+                this.data = {
+                    pnl: [],
+                    trades: [],
+                    strategies: {},
+                    risk: {}
+                };
+                this.socket = null;
+                
+                this.init();
+            }
+            
+            async init() {
+                console.log('🚀 Initializing Analytics Dashboard...');
+                
+                // Setup WebSocket
+                this.setupWebSocket();
+                
+                // Load initial data
+                await this.loadAnalyticsData();
+                
+                // Initialize all charts
+                this.initializeCharts();
+                
+                // Setup event handlers
+                this.setupEventHandlers();
+                
+                // Start auto-refresh
+                this.startAutoRefresh();
+            }
+            
+            setupWebSocket() {
+                this.socket = io('/', {
+                    transports: ['websocket', 'polling']
+                });
+                
+                this.socket.on('analytics_update', (data) => {
+                    this.handleAnalyticsUpdate(data);
+                });
+                
+                this.socket.on('trade_completed', (trade) => {
+                    this.handleTradeCompleted(trade);
+                });
+            }
+            
+            async loadAnalyticsData() {
+                try {
+                    // Load performance analytics
+                    const perfResponse = await fetch(`/api/analytics/performance?days=${this.getTimeframeDays()}`);
+                    const perfData = await perfResponse.json();
+                    
+                    // Load detailed analytics
+                    const detailResponse = await fetch('/api/analytics/detailed');
+                    const detailData = await detailResponse.json();
+                    
+                    // Process and store data
+                    this.processAnalyticsData(perfData, detailData);
+                    
+                    // Update all UI components
+                    this.updateKPICards();
+                    this.updatePerformanceTable();
+                    this.updateStrategyCards();
+                    this.updateRiskMetrics();
+                    
+                } catch (error) {
+                    console.error('Failed to load analytics data:', error);
+                }
+            }
+            
+            processAnalyticsData(perfData, detailData) {
+                // Update KPIs
+                const totalPnL = perfData.total_pnl || 0;
+                const winRate = perfData.win_rate || 0;
+                const totalTrades = (perfData.successful_trades || 0) + (perfData.failed_trades || 0);
+                
+                document.getElementById('totalProfit').textContent = this.formatCurrency(totalPnL);
+                document.getElementById('winRate').textContent = winRate.toFixed(1) + '%';
+                document.getElementById('totalTrades').textContent = totalTrades;
+                
+                // Calculate max drawdown
+                if (detailData.risk_metrics) {
+                    const maxDrawdown = detailData.risk_metrics.max_drawdown || 0;
+                    document.getElementById('maxDrawdown').textContent = maxDrawdown.toFixed(1) + '%';
+                }
+            }
+            
+            initializeCharts() {
+                // Initialize P&L Chart with ApexCharts
+                this.initPnLChart();
+                
+                // Initialize Volume Chart with Chart.js
+                this.initVolumeChart();
+                
+                // Initialize Asset Distribution
+                this.initAssetDistributionChart();
+                
+                // Initialize Signals Effectiveness
+                this.initSignalsEffectivenessChart();
+                
+                // Initialize Time Distribution
+                this.initTimeDistributionChart();
+                
+                // Initialize Risk Gauges
+                this.initRiskGauges();
+                
+                // Initialize profit sparkline
+                this.initProfitSparkline();
+            }
+            
+            initPnLChart() {
+                const options = {
+                    series: [{
+                        name: 'P&L',
+                        data: this.generatePnLData()
+                    }],
+                    chart: {
+                        type: 'area',
+                        height: '100%',
+                        toolbar: {
+                            show: true,
+                            tools: {
+                                download: true,
+                                selection: true,
+                                zoom: true,
+                                zoomin: true,
+                                zoomout: true,
+                                pan: true,
+                                reset: true
+                            }
+                        },
+                        background: 'transparent',
+                        foreColor: '#a0a9c9'
+                    },
+                    dataLabels: {
+                        enabled: false
+                    },
+                    stroke: {
+                        curve: 'smooth',
+                        width: 2
+                    },
+                    fill: {
+                        type: 'gradient',
+                        gradient: {
+                            shadeIntensity: 1,
+                            opacityFrom: 0.7,
+                            opacityTo: 0.2,
+                            stops: [0, 100]
+                        }
+                    },
+                    xaxis: {
+                        type: 'datetime',
+                        labels: {
+                            style: {
+                                colors: '#a0a9c9'
+                            }
+                        }
+                    },
+                    yaxis: {
+                        labels: {
+                            style: {
+                                colors: '#a0a9c9'
+                            },
+                            formatter: (value) => '$' + value.toFixed(0)
+                        }
+                    },
+                    tooltip: {
+                        theme: 'dark',
+                        x: {
+                            format: 'dd MMM yyyy'
+                        },
+                        y: {
+                            formatter: (value) => '$' + value.toFixed(2)
+                        }
+                    },
+                    grid: {
+                        borderColor: 'rgba(255,255,255,0.1)',
+                        strokeDashArray: 4
+                    },
+                    colors: ['#00ff88']
+                };
+                
+                this.charts.pnl = new ApexCharts(document.getElementById('pnlChart'), options);
+                this.charts.pnl.render();
+            }
+            
+            initVolumeChart() {
+                const ctx = document.getElementById('volumeChart').getContext('2d');
+                
+                this.charts.volume = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: this.generateDateLabels(7),
+                        datasets: [{
+                            label: 'Объем торгов ($)',
+                            data: this.generateVolumeData(7),
+                            backgroundColor: 'rgba(50, 115, 220, 0.6)',
+                            borderColor: 'rgba(50, 115, 220, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                grid: {
+                                    color: 'rgba(255,255,255,0.1)'
+                                },
+                                ticks: {
+                                    color: '#a0a9c9',
+                                    callback: function(value) {
+                                        return '$' + (value / 1000).toFixed(0) + 'K';
+                                    }
+                                }
+                            },
+                            x: {
+                                grid: {
+                                    display: false
+                                },
+                                ticks: {
+                                    color: '#a0a9c9'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+            
+            initAssetDistributionChart() {
+                const options = {
+                    series: [30, 25, 20, 15, 10],
+                    chart: {
+                        type: 'donut',
+                        height: '100%',
+                        background: 'transparent'
+                    },
+                    labels: ['BTC', 'ETH', 'BNB', 'SOL', 'Others'],
+                    colors: ['#00ff88', '#3273dc', '#ffdd57', '#ff3860', '#b362ff'],
+                    dataLabels: {
+                        enabled: true,
+                        style: {
+                            colors: ['#fff']
+                        }
+                    },
+                    plotOptions: {
+                        pie: {
+                            donut: {
+                                size: '70%',
+                                labels: {
+                                    show: true,
+                                    total: {
+                                        show: true,
+                                        label: 'Всего активов',
+                                        fontSize: '14px',
+                                        color: '#a0a9c9'
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            colors: '#a0a9c9'
+                        }
+                    },
+                    stroke: {
+                        width: 0
+                    }
+                };
+                
+                this.charts.assetDistribution = new ApexCharts(
+                    document.getElementById('assetDistributionChart'), 
+                    options
+                );
+                this.charts.assetDistribution.render();
+            }
+            
+            initSignalsEffectivenessChart() {
+                const options = {
+                    series: [{
+                        name: 'Успешные',
+                        data: [65, 72, 68, 74, 70, 76, 73]
+                    }, {
+                        name: 'Неуспешные',
+                        data: [35, 28, 32, 26, 30, 24, 27]
+                    }],
+                    chart: {
+                        type: 'bar',
+                        height: '100%',
+                        stacked: true,
+                        stackType: '100%',
+                        toolbar: {
+                            show: false
+                        },
+                        background: 'transparent'
+                    },
+                    plotOptions: {
+                        bar: {
+                            horizontal: false,
+                            borderRadius: 4
+                        }
+                    },
+                    xaxis: {
+                        categories: ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'],
+                        labels: {
+                            style: {
+                                colors: '#a0a9c9'
+                            }
+                        }
+                    },
+                    yaxis: {
+                        labels: {
+                            style: {
+                                colors: '#a0a9c9'
+                            }
+                        }
+                    },
+                    fill: {
+                        opacity: 1
+                    },
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            colors: '#a0a9c9'
+                        }
+                    },
+                    colors: ['#00ff88', '#ff3860'],
+                    grid: {
+                        borderColor: 'rgba(255,255,255,0.1)'
+                    }
+                };
+                
+                this.charts.signalsEffectiveness = new ApexCharts(
+                    document.getElementById('signalsEffectivenessChart'), 
+                    options
+                );
+                this.charts.signalsEffectiveness.render();
+            }
+            
+            initTimeDistributionChart() {
+                const options = {
+                    series: [{
+                        name: 'Сделки',
+                        data: this.generateHourlyDistribution()
+                    }],
+                    chart: {
+                        type: 'heatmap',
+                        height: '100%',
+                        toolbar: {
+                            show: false
+                        },
+                        background: 'transparent'
+                    },
+                    dataLabels: {
+                        enabled: false
+                    },
+                    colors: ['#3273dc'],
+                    xaxis: {
+                        type: 'category',
+                        categories: ['00', '04', '08', '12', '16', '20'],
+                        labels: {
+                            style: {
+                                colors: '#a0a9c9'
+                            }
+                        }
+                    },
+                    yaxis: {
+                        categories: ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'],
+                        labels: {
+                            style: {
+                                colors: '#a0a9c9'
+                            }
+                        }
+                    },
+                    grid: {
+                        borderColor: 'rgba(255,255,255,0.1)'
+                    }
+                };
+                
+                this.charts.timeDistribution = new ApexCharts(
+                    document.getElementById('timeDistributionChart'), 
+                    options
+                );
+                this.charts.timeDistribution.render();
+            }
+            
+            initRiskGauges() {
+                // VaR Gauge
+                this.createGauge('varGauge', 15, 100, 'VaR', '%');
+                
+                // Sharpe Ratio Gauge
+                this.createGauge('sharpeGauge', 1.8, 3, 'Sharpe', '');
+                
+                // Exposure Gauge
+                this.createGauge('exposureGauge', 65, 100, 'Exposure', '%');
+                
+                // Correlation Gauge
+                this.createGauge('correlationGauge', 0.3, 1, 'Corr', '');
+            }
+            
+            createGauge(elementId, value, max, label, unit) {
+                const options = {
+                    series: [value / max * 100],
+                    chart: {
+                        height: 120,
+                        type: 'radialBar',
+                        background: 'transparent'
+                    },
+                    plotOptions: {
+                        radialBar: {
+                            hollow: {
+                                size: '60%'
+                            },
+                            track: {
+                                background: 'rgba(255,255,255,0.1)'
+                            },
+                            dataLabels: {
+                                name: {
+                                    show: false
+                                },
+                                value: {
+                                    show: true,
+                                    fontSize: '16px',
+                                    color: '#fff',
+                                    formatter: function() {
+                                        return value + unit;
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    colors: [this.getGaugeColor(value / max)],
+                    stroke: {
+                        lineCap: 'round'
+                    }
+                };
+                
+                const chart = new ApexCharts(document.getElementById(elementId), options);
+                chart.render();
+                this.charts[elementId] = chart;
+            }
+            
+            getGaugeColor(ratio) {
+                if (ratio < 0.3) return '#00ff88';
+                if (ratio < 0.7) return '#ffdd57';
+                return '#ff3860';
+            }
+            
+            initProfitSparkline() {
+                const ctx = document.getElementById('profitSparkline').getContext('2d');
+                
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: Array(20).fill(''),
+                        datasets: [{
+                            data: this.generateSparklineData(),
+                            borderColor: 'rgba(0, 255, 136, 0.8)',
+                            borderWidth: 2,
+                            fill: false,
+                            tension: 0.4,
+                            pointRadius: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false }
+                        },
+                        scales: {
+                            x: { display: false },
+                            y: { display: false }
+                        }
+                    }
+                });
+            }
+            
+            updateStrategyCards() {
+                const strategies = [
+                    { name: 'Whale Hunting', winRate: 68, trades: 45, profit: 2340 },
+                    { name: 'Multi Indicator', winRate: 72, trades: 89, profit: 1890 },
+                    { name: 'ML Prediction', winRate: 65, trades: 56, profit: 1560 },
+                    { name: 'Momentum', winRate: 70, trades: 78, profit: 2100 },
+                    { name: 'Mean Reversion', winRate: 63, trades: 34, profit: 890 },
+                    { name: 'Scalping', winRate: 75, trades: 156, profit: 1200 }
+                ];
+                
+                const container = document.getElementById('strategyGrid');
+                container.innerHTML = '';
+                
+                strategies.forEach(strategy => {
+                    const card = document.createElement('div');
+                    card.className = 'strategy-card';
+                    card.innerHTML = `
+                        <div class="strategy-name">${strategy.name}</div>
+                        <div class="strategy-stats">
+                            <div class="strategy-stat">
+                                <div class="strategy-stat-value" style="color: ${strategy.winRate >= 70 ? 'var(--success)' : strategy.winRate >= 60 ? 'var(--warning)' : 'var(--danger)'}">
+                                    ${strategy.winRate}%
+                                </div>
+                                <div class="strategy-stat-label">Win Rate</div>
+                            </div>
+                            <div class="strategy-stat">
+                                <div class="strategy-stat-value">${strategy.trades}</div>
+                                <div class="strategy-stat-label">Сделок</div>
+                            </div>
+                            <div class="strategy-stat">
+                                <div class="strategy-stat-value" style="color: var(--success)">
+                                    $${strategy.profit}
+                                </div>
+                                <div class="strategy-stat-label">Прибыль</div>
+                            </div>
+                            <div class="strategy-stat">
+                                <div class="strategy-stat-value">
+                                    ${(strategy.profit / strategy.trades).toFixed(0)}
+                                </div>
+                                <div class="strategy-stat-label">Ср. прибыль</div>
+                            </div>
+                        </div>
+                    `;
+                    container.appendChild(card);
+                });
+            }
+            
+            updatePerformanceTable() {
+                // This would be populated with real data from the API
+                const periods = ['today', 'week', 'month', 'all'];
+                const metrics = {
+                    today: { pnl: 234, trades: 12, winrate: 75, avgwin: 45, avgloss: -23, pf: 1.95 },
+                    week: { pnl: 1560, trades: 67, winrate: 68, avgwin: 52, avgloss: -31, pf: 1.68 },
+                    month: { pnl: 4890, trades: 234, winrate: 71, avgwin: 48, avgloss: -28, pf: 1.71 },
+                    all: { pnl: 15670, trades: 890, winrate: 69, avgwin: 51, avgloss: -29, pf: 1.76 }
+                };
+                
+                periods.forEach(period => {
+                    const data = metrics[period];
+                    document.getElementById(`pnl-${period}`).textContent = this.formatCurrency(data.pnl);
+                    document.getElementById(`trades-${period}`).textContent = data.trades;
+                    document.getElementById(`winrate-${period}`).textContent = data.winrate + '%';
+                    document.getElementById(`avgwin-${period}`).textContent = this.formatCurrency(data.avgwin);
+                    document.getElementById(`avgloss-${period}`).textContent = this.formatCurrency(data.avgloss);
+                    document.getElementById(`pf-${period}`).textContent = data.pf.toFixed(2);
+                });
+            }
+            
+            updateRiskMetrics() {
+                // Update risk metric values
+                document.getElementById('varValue').textContent = '15%';
+                document.getElementById('sharpeValue').textContent = '1.80';
+                document.getElementById('exposureValue').textContent = '65%';
+                document.getElementById('correlationValue').textContent = '0.30';
+            }
+            
+            handleAnalyticsUpdate(data) {
+                // Handle real-time analytics updates
+                if (data.kpi) {
+                    this.updateKPICards();
+                }
+                
+                if (data.pnl) {
+                    this.updatePnLChart(data.pnl);
+                }
+                
+                if (data.strategies) {
+                    this.updateStrategyCards();
+                }
+            }
+            
+            handleTradeCompleted(trade) {
+                // Update relevant metrics when a trade is completed
+                this.loadAnalyticsData();
+            }
+            
+            updateKPICards() {
+                // Animate KPI updates
+                const cards = document.querySelectorAll('.kpi-value');
+                cards.forEach(card => {
+                    card.style.transform = 'scale(1.1)';
+                    setTimeout(() => {
+                        card.style.transform = 'scale(1)';
+                    }, 300);
+                });
+            }
+            
+            updatePnLChart(newData) {
+                if (this.charts.pnl) {
+                    this.charts.pnl.updateSeries([{
+                        name: 'P&L',
+                        data: newData
+                    }]);
+                }
+            }
+            
+            changeTimeframe(timeframe) {
+                this.currentTimeframe = timeframe;
+                
+                // Update button states
+                document.querySelectorAll('.time-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                event.target.classList.add('active');
+                
+                // Reload data for new timeframe
+                this.loadAnalyticsData();
+            }
+            
+            getTimeframeDays() {
+                const timeframes = {
+                    '1D': 1,
+                    '1W': 7,
+                    '1M': 30,
+                    '3M': 90,
+                    '1Y': 365,
+                    'ALL': 9999
+                };
+                return timeframes[this.currentTimeframe] || 30;
+            }
+            
+            startAutoRefresh() {
+                setInterval(() => {
+                    this.loadAnalyticsData();
+                }, 60000); // Refresh every minute
+            }
+            
+            setupEventHandlers() {
+                // Handle window resize
+                window.addEventListener('resize', () => {
+                    Object.values(this.charts).forEach(chart => {
+                        if (chart.resize) chart.resize();
+                        if (chart.render) chart.render();
+                    });
+                });
+            }
+            
+            // Utility methods
+            formatCurrency(value) {
+                const formatted = Math.abs(value).toFixed(2);
+                return (value >= 0 ? '$' : '-$') + formatted;
+            }
+            
+            generatePnLData() {
+                const data = [];
+                const days = this.getTimeframeDays();
+                let cumulative = 10000;
+                
+                for (let i = days; i >= 0; i--) {
+                    const date = new Date();
+                    date.setDate(date.getDate() - i);
+                    
+                    // Simulate P&L changes
+                    const change = (Math.random() - 0.48) * 200;
+                    cumulative += change;
+                    
+                    data.push({
+                        x: date.getTime(),
+                        y: cumulative
+                    });
+                }
+                
+                return data;
+            }
+            
+            generateDateLabels(days) {
+                const labels = [];
+                for (let i = days - 1; i >= 0; i--) {
+                    const date = new Date();
+                    date.setDate(date.getDate() - i);
+                    labels.push(date.toLocaleDateString('ru-RU', { day: '2-digit', month: 'short' }));
+                }
+                return labels;
+            }
+            
+            generateVolumeData(days) {
+                return Array(days).fill(0).map(() => Math.random() * 50000 + 10000);
+            }
+            
+            generateSparklineData() {
+                return Array(20).fill(0).map(() => Math.random() * 100 + 50);
+            }
+            
+            generateHourlyDistribution() {
+                const data = [];
+                for (let day = 0; day < 7; day++) {
+                    for (let hour = 0; hour < 6; hour++) {
+                        data.push({
+                            x: hour.toString(),
+                            y: day,
+                            value: Math.floor(Math.random() * 10)
+                        });
+                    }
+                }
+                return data;
+            }
+            
+            async exportAnalytics() {
+                try {
+                    // Generate comprehensive report
+                    const report = {
+                        generated_at: new Date().toISOString(),
+                        timeframe: this.currentTimeframe,
+                        kpis: {
+                            total_profit: document.getElementById('totalProfit').textContent,
+                            win_rate: document.getElementById('winRate').textContent,
+                            total_trades: document.getElementById('totalTrades').textContent,
+                            max_drawdown: document.getElementById('maxDrawdown').textContent
+                        },
+                        performance: this.collectPerformanceData(),
+                        strategies: this.collectStrategyData(),
+                        risk_metrics: this.collectRiskData()
+                    };
+                    
+                    // Convert to JSON and download
+                    const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `analytics_report_${new Date().toISOString().split('T')[0]}.json`;
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    
+                } catch (error) {
+                    console.error('Export failed:', error);
+                    alert('Не удалось экспортировать отчет');
+                }
+            }
+            
+            collectPerformanceData() {
+                const periods = ['today', 'week', 'month', 'all'];
+                const data = {};
+                
+                periods.forEach(period => {
+                    data[period] = {
+                        pnl: document.getElementById(`pnl-${period}`).textContent,
+                        trades: document.getElementById(`trades-${period}`).textContent,
+                        winrate: document.getElementById(`winrate-${period}`).textContent,
+                        avg_win: document.getElementById(`avgwin-${period}`).textContent,
+                        avg_loss: document.getElementById(`avgloss-${period}`).textContent,
+                        profit_factor: document.getElementById(`pf-${period}`).textContent
+                    };
+                });
+                
+                return data;
+            }
+            
+            collectStrategyData() {
+                const cards = document.querySelectorAll('.strategy-card');
+                const data = [];
+                
+                cards.forEach(card => {
+                    const name = card.querySelector('.strategy-name').textContent;
+                    const stats = card.querySelectorAll('.strategy-stat-value');
+                    
+                    data.push({
+                        name: name,
+                        win_rate: stats[0].textContent,
+                        trades: stats[1].textContent,
+                        profit: stats[2].textContent,
+                        avg_profit: stats[3].textContent
+                    });
+                });
+                
+                return data;
+            }
+            
+            collectRiskData() {
+                return {
+                    var: document.getElementById('varValue').textContent,
+                    sharpe_ratio: document.getElementById('sharpeValue').textContent,
+                    exposure: document.getElementById('exposureValue').textContent,
+                    correlation: document.getElementById('correlationValue').textContent
+                };
+            }
+        }
+        
+        // Initialize the dashboard
+        const dashboard = new AnalyticsDashboard();
+        
+        // Global functions for onclick handlers
+        function changeTimeframe(timeframe) {
+            dashboard.changeTimeframe(timeframe);
+        }
+        
+        function exportAnalytics() {
+            dashboard.exportAnalytics();
+        }
+        
+        function togglePnLView(view) {
+            // Toggle between cumulative and daily P&L views
+            console.log('Switching to', view, 'view');
+            // Implementation would update the chart data
+        }
+        
+        function refreshStrategies() {
+            dashboard.updateStrategyCards();
+        }
+    </script>
+</body>
+</html>

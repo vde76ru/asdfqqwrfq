@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Матрица торговых сигналов - Professional Trading System</title>
+    
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <style>
+        :root {
+            --bg-primary: #0a0e27;
+            --bg-secondary: #151a3a;
+            --bg-card: #1a1f3a;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a9c9;
+            --success: #00ff88;
+            --danger: #ff3860;
+            --warning: #ffdd57;
+            --info: #3273dc;
+        }
+        
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+        
+        .main-container {
+            padding: 20px;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+        
+        /* Header Styles */
+        .header-section {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .status-active {
+            background: rgba(0, 255, 136, 0.1);
+            color: var(--success);
+            border: 1px solid var(--success);
+        }
+        
+        .pulse {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: var(--success);
+            border-radius: 50%;
+            margin-right: 8px;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(0, 255, 136, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(0, 255, 136, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(0, 255, 136, 0); }
+        }
+        
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: var(--bg-card);
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            border: 1px solid rgba(255,255,255,0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+        }
+        
+        .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            margin: 10px 0 5px;
+        }
+        
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+        
+        /* Signals Table */
+        .signals-table-container {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 20px;
+            overflow-x: auto;
+        }
+        
+        .signals-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .signals-table th {
+            background: var(--bg-secondary);
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            color: var(--text-secondary);
+            border-bottom: 2px solid var(--bg-primary);
+        }
+        
+        .signals-table td {
+            padding: 15px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        
+        .signals-table tr:hover {
+            background: rgba(255,255,255,0.03);
+        }
+        
+        /* Symbol Cell */
+        .symbol-cell {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .symbol-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--bg-secondary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+        }
+        
+        .price-change {
+            font-size: 12px;
+            margin-top: 4px;
+        }
+        
+        .price-up { color: var(--success); }
+        .price-down { color: var(--danger); }
+        
+        /* Strategy Signals */
+        .strategy-signals {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        
+        .strategy-badge {
+            padding: 4px 10px;
+            border-radius: 16px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .strategy-buy {
+            background: rgba(0, 255, 136, 0.2);
+            color: var(--success);
+            border: 1px solid var(--success);
+        }
+        
+        .strategy-sell {
+            background: rgba(255, 56, 96, 0.2);
+            color: var(--danger);
+            border: 1px solid var(--danger);
+        }
+        
+        .strategy-neutral {
+            background: rgba(255, 221, 87, 0.2);
+            color: var(--warning);
+            border: 1px solid var(--warning);
+        }
+        
+        .strategy-badge:hover {
+            transform: scale(1.05);
+        }
+        
+        /* Confidence Bar */
+        .confidence-bar {
+            width: 100px;
+            height: 8px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 5px 0;
+        }
+        
+        .confidence-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--danger) 0%, var(--warning) 50%, var(--success) 100%);
+            transition: width 0.3s ease;
+        }
+        
+        /* Action Buttons */
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .btn-action {
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .btn-buy {
+            background: var(--success);
+            color: var(--bg-primary);
+        }
+        
+        .btn-sell {
+            background: var(--danger);
+            color: white;
+        }
+        
+        .btn-details {
+            background: var(--info);
+            color: white;
+        }
+        
+        .btn-action:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        
+        /* Risk Badge */
+        .risk-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .risk-low {
+            background: rgba(0, 255, 136, 0.2);
+            color: var(--success);
+        }
+        
+        .risk-medium {
+            background: rgba(255, 221, 87, 0.2);
+            color: var(--warning);
+        }
+        
+        .risk-high {
+            background: rgba(255, 56, 96, 0.2);
+            color: var(--danger);
+        }
+        
+        /* Modal Styles */
+        .modal-content {
+            background: var(--bg-card);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .modal-header {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .close-modal {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 24px;
+            cursor: pointer;
+        }
+        
+        /* Loading Spinner */
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255,255,255,0.1);
+            border-top-color: var(--info);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+            
+            .signals-table {
+                font-size: 14px;
+            }
+            
+            .strategy-signals {
+                max-width: 200px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <!-- Header Section -->
+        <div class="header-section">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <h1 class="mb-3">
+                        <i class="fas fa-chart-line me-3"></i>
+                        Матрица торговых сигналов
+                    </h1>
+                    <div class="status-indicator status-active">
+                        <span class="pulse"></span>
+                        Система активна
+                    </div>
+                </div>
+                <div class="col-md-6 text-md-end mt-3 mt-md-0">
+                    <button class="btn btn-primary me-2" onclick="refreshData()">
+                        <i class="fas fa-sync-alt me-2"></i>Обновить
+                    </button>
+                    <button class="btn btn-secondary" onclick="showSettings()">
+                        <i class="fas fa-cog me-2"></i>Настройки
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Statistics Cards -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <i class="fas fa-signal fa-2x text-info"></i>
+                <div class="stat-value" id="totalSignals">0</div>
+                <div class="stat-label">Активных сигналов</div>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-chart-pie fa-2x text-success"></i>
+                <div class="stat-value" id="buySignals">0</div>
+                <div class="stat-label">Сигналов покупки</div>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-chart-line fa-2x text-danger"></i>
+                <div class="stat-value" id="sellSignals">0</div>
+                <div class="stat-label">Сигналов продажи</div>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-percentage fa-2x text-warning"></i>
+                <div class="stat-value" id="avgConfidence">0%</div>
+                <div class="stat-label">Средняя уверенность</div>
+            </div>
+        </div>
+        
+        <!-- Signals Table -->
+        <div class="signals-table-container">
+            <table class="signals-table">
+                <thead>
+                    <tr>
+                        <th>Актив</th>
+                        <th>Цена</th>
+                        <th>Стратегии</th>
+                        <th>Уверенность</th>
+                        <th>Сигнал</th>
+                        <th>Риск</th>
+                        <th>TP / SL</th>
+                        <th>Действия</th>
+                    </tr>
+                </thead>
+                <tbody id="signalsTableBody">
+                    <!-- Динамически заполняется -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <!-- Detail Modal -->
+    <div class="modal fade" id="detailModal" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalTitle">Детальный анализ</h5>
+                    <button type="button" class="close-modal" data-bs-dismiss="modal">&times;</button>
+                </div>
+                <div class="modal-body" id="modalBody">
+                    <!-- Динамически заполняется -->
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Socket.IO -->
+    <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
+    
+    <script>
+        // ==================== MAIN APPLICATION ====================
+        class SignalsMatrixApp {
+            constructor() {
+                this.signals = new Map();
+                this.socket = null;
+                this.updateInterval = null;
+                this.init();
+            }
+            
+            async init() {
+                console.log('🚀 Initializing Signals Matrix App...');
+                await this.loadInitialData();
+                this.setupWebSocket();
+                this.setupEventHandlers();
+                this.startAutoRefresh();
+            }
+            
+            async loadInitialData() {
+                try {
+                    const response = await fetch('/api/signals/matrix');
+                    const data = await response.json();
+                    
+                    if (data.success && data.data) {
+                        data.data.forEach(signal => {
+                            this.signals.set(signal.symbol, signal);
+                        });
+                        this.renderTable();
+                        this.updateStatistics();
+                    }
+                } catch (error) {
+                    console.error('Failed to load initial data:', error);
+                }
+            }
+            
+            setupWebSocket() {
+                this.socket = io('/', {
+                    transports: ['websocket', 'polling'],
+                    reconnection: true
+                });
+                
+                this.socket.on('connect', () => {
+                    console.log('✅ WebSocket connected');
+                    this.updateConnectionStatus(true);
+                });
+                
+                this.socket.on('disconnect', () => {
+                    console.log('❌ WebSocket disconnected');
+                    this.updateConnectionStatus(false);
+                });
+                
+                this.socket.on('signal_matrix_update', (data) => {
+                    this.handleSignalUpdate(data);
+                });
+            }
+            
+            handleSignalUpdate(updates) {
+                if (!Array.isArray(updates)) updates = [updates];
+                
+                updates.forEach(update => {
+                    this.signals.set(update.symbol, update);
+                    this.updateTableRow(update);
+                });
+                
+                this.updateStatistics();
+            }
+            
+            renderTable() {
+                const tbody = document.getElementById('signalsTableBody');
+                tbody.innerHTML = '';
+                
+                this.signals.forEach(signal => {
+                    tbody.appendChild(this.createTableRow(signal));
+                });
+            }
+            
+            createTableRow(signal) {
+                const row = document.createElement('tr');
+                row.id = `row-${signal.symbol}`;
+                
+                row.innerHTML = `
+                    <td>
+                        <div class="symbol-cell">
+                            <div class="symbol-icon">${this.getSymbolIcon(signal.symbol)}</div>
+                            <div>
+                                <div class="fw-bold">${signal.symbol}</div>
+                                <div class="price-change ${signal.price_change_24h >= 0 ? 'price-up' : 'price-down'}">
+                                    ${signal.price_change_24h >= 0 ? '+' : ''}${signal.price_change_24h?.toFixed(2) || 0}%
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="fw-bold">$${this.formatPrice(signal.current_price)}</div>
+                        <small class="text-secondary">Vol: ${this.formatVolume(signal.volume_24h)}</small>
+                    </td>
+                    <td>${this.renderStrategySignals(signal.strategies_analysis)}</td>
+                    <td>${this.renderConfidence(signal.aggregated_signal?.confidence)}</td>
+                    <td>${this.renderSignal(signal.aggregated_signal)}</td>
+                    <td>${this.renderRisk(signal.risk_assessment)}</td>
+                    <td>${this.renderTargets(signal.aggregated_signal)}</td>
+                    <td>${this.renderActions(signal)}</td>
+                `;
+                
+                return row;
+            }
+            
+            renderStrategySignals(strategies) {
+                if (!strategies) return '-';
+                
+                let html = '<div class="strategy-signals">';
+                Object.entries(strategies).forEach(([name, data]) => {
+                    const signal = data.signal?.toLowerCase() || 'neutral';
+                    const confidence = Math.round((data.confidence || 0) * 100);
+                    html += `
+                        <span class="strategy-badge strategy-${signal}" 
+                              title="${name}: ${confidence}% confidence">
+                            ${this.getStrategyShortName(name)}
+                        </span>
+                    `;
+                });
+                html += '</div>';
+                return html;
+            }
+            
+            renderConfidence(confidence) {
+                if (!confidence) return '-';
+                const percent = Math.round(confidence * 100);
+                return `
+                    <div>
+                        <div class="confidence-bar">
+                            <div class="confidence-fill" style="width: ${percent}%"></div>
+                        </div>
+                        <small>${percent}%</small>
+                    </div>
+                `;
+            }
+            
+            renderSignal(signal) {
+                if (!signal || !signal.action) return '-';
+                
+                const actionClass = signal.action.toLowerCase().includes('buy') ? 'text-success' : 
+                                   signal.action.toLowerCase().includes('sell') ? 'text-danger' : 
+                                   'text-warning';
+                
+                return `<span class="${actionClass} fw-bold">${signal.action}</span>`;
+            }
+            
+            renderRisk(risk) {
+                if (!risk) return '-';
+                
+                const level = risk.level?.toLowerCase() || 'medium';
+                return `<span class="risk-badge risk-${level}">${risk.level}</span>`;
+            }
+            
+            renderTargets(signal) {
+                if (!signal) return '-';
+                
+                return `
+                    <div class="small">
+                        ${signal.take_profit ? `<div class="text-success">TP: $${this.formatPrice(signal.take_profit)}</div>` : ''}
+                        ${signal.stop_loss ? `<div class="text-danger">SL: $${this.formatPrice(signal.stop_loss)}</div>` : ''}
+                    </div>
+                `;
+            }
+            
+            renderActions(signal) {
+                return `
+                    <div class="action-buttons">
+                        <button class="btn-action btn-buy" onclick="app.openTrade('${signal.symbol}', 'BUY')">
+                            <i class="fas fa-arrow-up"></i>
+                        </button>
+                        <button class="btn-action btn-sell" onclick="app.openTrade('${signal.symbol}', 'SELL')">
+                            <i class="fas fa-arrow-down"></i>
+                        </button>
+                        <button class="btn-action btn-details" onclick="app.showDetails('${signal.symbol}')">
+                            <i class="fas fa-info"></i>
+                        </button>
+                    </div>
+                `;
+            }
+            
+            updateStatistics() {
+                let totalSignals = 0;
+                let buySignals = 0;
+                let sellSignals = 0;
+                let totalConfidence = 0;
+                
+                this.signals.forEach(signal => {
+                    if (signal.aggregated_signal) {
+                        totalSignals++;
+                        totalConfidence += signal.aggregated_signal.confidence || 0;
+                        
+                        if (signal.aggregated_signal.action?.includes('BUY')) buySignals++;
+                        else if (signal.aggregated_signal.action?.includes('SELL')) sellSignals++;
+                    }
+                });
+                
+                document.getElementById('totalSignals').textContent = totalSignals;
+                document.getElementById('buySignals').textContent = buySignals;
+                document.getElementById('sellSignals').textContent = sellSignals;
+                document.getElementById('avgConfidence').textContent = 
+                    totalSignals > 0 ? Math.round(totalConfidence / totalSignals * 100) + '%' : '0%';
+            }
+            
+            async openTrade(symbol, side) {
+                if (!confirm(`Открыть виртуальную ${side === 'BUY' ? 'покупку' : 'продажу'} ${symbol}?`)) {
+                    return;
+                }
+                
+                try {
+                    const response = await fetch('/api/trades/virtual', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({symbol, side})
+                    });
+                    
+                    if (response.ok) {
+                        alert('Виртуальная сделка открыта успешно!');
+                    } else {
+                        alert('Ошибка при открытии сделки');
+                    }
+                } catch (error) {
+                    console.error('Trade error:', error);
+                    alert('Ошибка при открытии сделки');
+                }
+            }
+            
+            async showDetails(symbol) {
+                const signal = this.signals.get(symbol);
+                if (!signal) return;
+                
+                document.getElementById('modalTitle').textContent = `Детальный анализ ${symbol}`;
+                document.getElementById('modalBody').innerHTML = this.renderDetailedAnalysis(signal);
+                
+                const modal = new bootstrap.Modal(document.getElementById('detailModal'));
+                modal.show();
+            }
+            
+            renderDetailedAnalysis(signal) {
+                return `
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>Анализ стратегий</h5>
+                            ${this.renderStrategyDetails(signal.strategies_analysis)}
+                        </div>
+                        <div class="col-md-6">
+                            <h5>Технические индикаторы</h5>
+                            ${this.renderIndicators(signal.indicators)}
+                        </div>
+                    </div>
+                    <div class="row mt-4">
+                        <div class="col-md-12">
+                            <h5>График цены (24ч)</h5>
+                            <canvas id="priceChart" width="400" height="200"></canvas>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // Utility methods
+            formatPrice(price) {
+                if (!price) return '0.00';
+                return parseFloat(price).toFixed(2);
+            }
+            
+            formatVolume(volume) {
+                if (!volume) return '0';
+                if (volume > 1e9) return (volume / 1e9).toFixed(2) + 'B';
+                if (volume > 1e6) return (volume / 1e6).toFixed(2) + 'M';
+                if (volume > 1e3) return (volume / 1e3).toFixed(2) + 'K';
+                return volume.toFixed(0);
+            }
+            
+            getSymbolIcon(symbol) {
+                const base = symbol.replace('USDT', '');
+                return base.substring(0, 2);
+            }
+            
+            getStrategyShortName(name) {
+                const names = {
+                    'whale_hunting': 'WH',
+                    'sleeping_giants': 'SG',
+                    'order_book_analysis': 'OB',
+                    'multi_indicator': 'MI',
+                    'ml_prediction': 'ML',
+                    'momentum': 'MO',
+                    'mean_reversion': 'MR',
+                    'scalping': 'SC'
+                };
+                return names[name] || name.substring(0, 2).toUpperCase();
+            }
+            
+            updateConnectionStatus(connected) {
+                // Update UI to show connection status
+            }
+            
+            startAutoRefresh() {
+                this.updateInterval = setInterval(() => {
+                    this.loadInitialData();
+                }, 30000); // Refresh every 30 seconds
+            }
+        }
+        
+        // Initialize app
+        const app = new SignalsMatrixApp();
+        
+        // Global functions for onclick handlers
+        function refreshData() {
+            app.loadInitialData();
+        }
+        
+        function showSettings() {
+            alert('Настройки будут добавлены в следующей версии');
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,1087 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Управление сделками - Trading System</title>
+    
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <style>
+        :root {
+            --bg-primary: #0a0e27;
+            --bg-secondary: #151a3a;
+            --bg-card: #1a1f3a;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a9c9;
+            --success: #00ff88;
+            --danger: #ff3860;
+            --warning: #ffdd57;
+            --info: #3273dc;
+        }
+        
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+        
+        .container-fluid {
+            padding: 20px;
+        }
+        
+        /* Tabs */
+        .nav-tabs {
+            border-bottom: 2px solid rgba(255,255,255,0.1);
+        }
+        
+        .nav-tabs .nav-link {
+            color: var(--text-secondary);
+            border: none;
+            padding: 12px 24px;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        
+        .nav-tabs .nav-link:hover {
+            color: var(--text-primary);
+            background: rgba(255,255,255,0.05);
+        }
+        
+        .nav-tabs .nav-link.active {
+            color: var(--info);
+            background: var(--bg-card);
+            border-bottom: 3px solid var(--info);
+        }
+        
+        /* Summary Cards */
+        .summary-card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 25px;
+            border: 1px solid rgba(255,255,255,0.1);
+            height: 100%;
+        }
+        
+        .summary-card h3 {
+            font-size: 16px;
+            color: var(--text-secondary);
+            margin-bottom: 15px;
+        }
+        
+        .summary-value {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        
+        .summary-change {
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        /* Trades Table */
+        .trades-container {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 30px;
+        }
+        
+        .trades-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .trades-table th {
+            background: var(--bg-secondary);
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            color: var(--text-secondary);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        .trades-table td {
+            padding: 15px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        
+        .trades-table tr:hover {
+            background: rgba(255,255,255,0.03);
+        }
+        
+        /* Trade Status */
+        .status-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .status-open {
+            background: rgba(50, 115, 220, 0.2);
+            color: var(--info);
+        }
+        
+        .status-closed {
+            background: rgba(160, 169, 201, 0.2);
+            color: var(--text-secondary);
+        }
+        
+        .status-profit {
+            background: rgba(0, 255, 136, 0.2);
+            color: var(--success);
+        }
+        
+        .status-loss {
+            background: rgba(255, 56, 96, 0.2);
+            color: var(--danger);
+        }
+        
+        /* PnL Display */
+        .pnl-positive {
+            color: var(--success);
+            font-weight: 600;
+        }
+        
+        .pnl-negative {
+            color: var(--danger);
+            font-weight: 600;
+        }
+        
+        /* Action Buttons */
+        .btn-sm-action {
+            padding: 4px 10px;
+            font-size: 12px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .btn-close-position {
+            background: var(--danger);
+            color: white;
+        }
+        
+        .btn-modify {
+            background: var(--warning);
+            color: var(--bg-primary);
+        }
+        
+        .btn-chart {
+            background: var(--info);
+            color: white;
+        }
+        
+        /* Charts Container */
+        .charts-row {
+            margin-top: 30px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        .chart-card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        /* Quick Actions */
+        .quick-actions {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .action-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .action-card {
+            background: var(--bg-secondary);
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 1px solid transparent;
+        }
+        
+        .action-card:hover {
+            border-color: var(--info);
+            transform: translateY(-2px);
+        }
+        
+        .action-icon {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+        
+        /* Loading State */
+        .loading-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 200px;
+        }
+        
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(255,255,255,0.1);
+            border-top-color: var(--info);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Responsive */
+        @media (max-width: 992px) {
+            .charts-row {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .action-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .trades-table {
+                font-size: 14px;
+            }
+            
+            .trades-table td, .trades-table th {
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <!-- Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>
+                <i class="fas fa-exchange-alt me-3"></i>
+                Управление сделками
+            </h1>
+            <div>
+                <button class="btn btn-primary" onclick="tradesManager.openNewTradeModal()">
+                    <i class="fas fa-plus me-2"></i>Новая сделка
+                </button>
+                <button class="btn btn-secondary ms-2" onclick="tradesManager.exportTrades()">
+                    <i class="fas fa-download me-2"></i>Экспорт
+                </button>
+            </div>
+        </div>
+        
+        <!-- Summary Cards -->
+        <div class="row mb-4">
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="summary-card">
+                    <h3>Общий P&L</h3>
+                    <div class="summary-value" id="totalPnL">$0.00</div>
+                    <div class="summary-change" id="totalPnLChange">
+                        <i class="fas fa-arrow-up text-success"></i>
+                        <span>0%</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="summary-card">
+                    <h3>Активные позиции</h3>
+                    <div class="summary-value" id="activePositions">0</div>
+                    <div class="summary-change">
+                        <span id="totalVolume">Объем: $0</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="summary-card">
+                    <h3>Win Rate</h3>
+                    <div class="summary-value" id="winRate">0%</div>
+                    <div class="summary-change">
+                        <span id="totalTrades">0 сделок</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="summary-card">
+                    <h3>Средняя прибыль</h3>
+                    <div class="summary-value" id="avgProfit">$0.00</div>
+                    <div class="summary-change">
+                        <span id="profitFactor">PF: 0.0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Quick Actions -->
+        <div class="quick-actions">
+            <h3>Быстрые действия</h3>
+            <div class="action-grid">
+                <div class="action-card" onclick="tradesManager.closeAllPositions()">
+                    <i class="fas fa-times-circle action-icon text-danger"></i>
+                    <div>Закрыть все позиции</div>
+                </div>
+                <div class="action-card" onclick="tradesManager.moveStopsToBreakeven()">
+                    <i class="fas fa-shield-alt action-icon text-warning"></i>
+                    <div>Перевести в безубыток</div>
+                </div>
+                <div class="action-card" onclick="tradesManager.enableTrailingStop()">
+                    <i class="fas fa-chart-line action-icon text-info"></i>
+                    <div>Включить трейлинг</div>
+                </div>
+                <div class="action-card" onclick="tradesManager.calculateRisk()">
+                    <i class="fas fa-calculator action-icon text-success"></i>
+                    <div>Расчет рисков</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Tabs -->
+        <ul class="nav nav-tabs" id="tradesTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="active-tab" data-bs-toggle="tab" 
+                        data-bs-target="#active" type="button" role="tab">
+                    Активные позиции
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="history-tab" data-bs-toggle="tab" 
+                        data-bs-target="#history" type="button" role="tab">
+                    История сделок
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="virtual-tab" data-bs-toggle="tab" 
+                        data-bs-target="#virtual" type="button" role="tab">
+                    Виртуальные сделки
+                </button>
+            </li>
+        </ul>
+        
+        <!-- Tab Content -->
+        <div class="tab-content" id="tradesTabContent">
+            <!-- Active Positions -->
+            <div class="tab-pane fade show active" id="active" role="tabpanel">
+                <div class="trades-container">
+                    <table class="trades-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Символ</th>
+                                <th>Направление</th>
+                                <th>Объем</th>
+                                <th>Цена входа</th>
+                                <th>Текущая цена</th>
+                                <th>P&L</th>
+                                <th>Время</th>
+                                <th>SL / TP</th>
+                                <th>Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody id="activeTradesBody">
+                            <tr>
+                                <td colspan="10" class="text-center">
+                                    <div class="loading-container">
+                                        <div class="spinner"></div>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Trade History -->
+            <div class="tab-pane fade" id="history" role="tabpanel">
+                <div class="trades-container">
+                    <table class="trades-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Символ</th>
+                                <th>Направление</th>
+                                <th>Объем</th>
+                                <th>Цена входа</th>
+                                <th>Цена выхода</th>
+                                <th>P&L</th>
+                                <th>Время входа</th>
+                                <th>Время выхода</th>
+                                <th>Стратегия</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historyTradesBody">
+                            <tr>
+                                <td colspan="10" class="text-center">
+                                    <div class="loading-container">
+                                        <div class="spinner"></div>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Virtual Trades -->
+            <div class="tab-pane fade" id="virtual" role="tabpanel">
+                <div class="trades-container">
+                    <table class="trades-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Символ</th>
+                                <th>Направление</th>
+                                <th>Объем</th>
+                                <th>Цена входа</th>
+                                <th>Текущая цена</th>
+                                <th>P&L</th>
+                                <th>Время</th>
+                                <th>Стратегия</th>
+                                <th>Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody id="virtualTradesBody">
+                            <tr>
+                                <td colspan="10" class="text-center">
+                                    <div class="loading-container">
+                                        <div class="spinner"></div>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Charts -->
+        <div class="charts-row">
+            <div class="chart-card">
+                <h4>График P&L</h4>
+                <canvas id="pnlChart" height="200"></canvas>
+            </div>
+            <div class="chart-card">
+                <h4>Распределение по активам</h4>
+                <canvas id="distributionChart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Trade Details Modal -->
+    <div class="modal fade" id="tradeModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content" style="background: var(--bg-card); color: var(--text-primary);">
+                <div class="modal-header" style="background: var(--bg-secondary); border-color: rgba(255,255,255,0.1);">
+                    <h5 class="modal-title">Детали сделки</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" style="filter: invert(1);"></button>
+                </div>
+                <div class="modal-body" id="tradeModalBody">
+                    <!-- Dynamic content -->
+                </div>
+                <div class="modal-footer" style="background: var(--bg-secondary); border-color: rgba(255,255,255,0.1);">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                    <button type="button" class="btn btn-primary" onclick="tradesManager.saveTradeModifications()">Сохранить</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Socket.IO -->
+    <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
+    
+    <script>
+        // ==================== TRADES MANAGER CLASS ====================
+        class TradesManager {
+            constructor() {
+                this.activeTrades = [];
+                this.historyTrades = [];
+                this.virtualTrades = [];
+                this.socket = null;
+                this.charts = {};
+                this.updateInterval = null;
+                this.init();
+            }
+            
+            async init() {
+                console.log('🚀 Initializing Trades Manager...');
+                this.setupWebSocket();
+                await this.loadAllData();
+                this.initCharts();
+                this.startAutoUpdate();
+            }
+            
+            setupWebSocket() {
+                this.socket = io('/', {
+                    transports: ['websocket', 'polling']
+                });
+                
+                this.socket.on('trade_update', (data) => {
+                    this.handleTradeUpdate(data);
+                });
+                
+                this.socket.on('position_closed', (data) => {
+                    this.handlePositionClosed(data);
+                });
+            }
+            
+            async loadAllData() {
+                await Promise.all([
+                    this.loadActiveTrades(),
+                    this.loadTradeHistory(),
+                    this.loadVirtualTrades()
+                ]);
+                this.updateStatistics();
+            }
+            
+            async loadActiveTrades() {
+                try {
+                    const response = await fetch('/api/trades/active');
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        this.activeTrades = data.trades || [];
+                        this.renderActiveTrades();
+                    }
+                } catch (error) {
+                    console.error('Failed to load active trades:', error);
+                }
+            }
+            
+            async loadTradeHistory() {
+                try {
+                    const response = await fetch('/api/trades/history?limit=50');
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        this.historyTrades = data.trades || [];
+                        this.renderTradeHistory();
+                    }
+                } catch (error) {
+                    console.error('Failed to load trade history:', error);
+                }
+            }
+            
+            async loadVirtualTrades() {
+                try {
+                    const response = await fetch('/api/trades/virtual');
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        this.virtualTrades = data.trades || [];
+                        this.renderVirtualTrades();
+                    }
+                } catch (error) {
+                    console.error('Failed to load virtual trades:', error);
+                }
+            }
+            
+            renderActiveTrades() {
+                const tbody = document.getElementById('activeTradesBody');
+                
+                if (this.activeTrades.length === 0) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="10" class="text-center py-5">
+                                <i class="fas fa-inbox fa-3x text-secondary mb-3"></i>
+                                <p>Нет активных позиций</p>
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+                
+                tbody.innerHTML = this.activeTrades.map(trade => `
+                    <tr>
+                        <td>#${trade.id}</td>
+                        <td>
+                            <div class="fw-bold">${trade.symbol}</div>
+                            <small class="text-secondary">${trade.strategy || 'Manual'}</small>
+                        </td>
+                        <td>
+                            <span class="badge ${trade.side === 'BUY' ? 'bg-success' : 'bg-danger'}">
+                                ${trade.side}
+                            </span>
+                        </td>
+                        <td>${trade.quantity}</td>
+                        <td>$${this.formatPrice(trade.entry_price)}</td>
+                        <td>$${this.formatPrice(trade.current_price)}</td>
+                        <td class="${trade.pnl >= 0 ? 'pnl-positive' : 'pnl-negative'}">
+                            ${trade.pnl >= 0 ? '+' : ''}$${Math.abs(trade.pnl).toFixed(2)}
+                            <small>(${trade.pnl_percent >= 0 ? '+' : ''}${trade.pnl_percent.toFixed(2)}%)</small>
+                        </td>
+                        <td>${this.formatTime(trade.created_at)}</td>
+                        <td>
+                            <small>
+                                SL: $${trade.stop_loss || '-'}<br>
+                                TP: $${trade.take_profit || '-'}
+                            </small>
+                        </td>
+                        <td>
+                            <button class="btn-sm-action btn-close-position" 
+                                    onclick="tradesManager.closeTrade(${trade.id})">
+                                <i class="fas fa-times"></i>
+                            </button>
+                            <button class="btn-sm-action btn-modify ms-1" 
+                                    onclick="tradesManager.modifyTrade(${trade.id})">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn-sm-action btn-chart ms-1" 
+                                    onclick="tradesManager.showTradeChart(${trade.id})">
+                                <i class="fas fa-chart-line"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+            
+            renderTradeHistory() {
+                const tbody = document.getElementById('historyTradesBody');
+                
+                if (this.historyTrades.length === 0) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="10" class="text-center py-5">
+                                <i class="fas fa-history fa-3x text-secondary mb-3"></i>
+                                <p>История сделок пуста</p>
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+                
+                tbody.innerHTML = this.historyTrades.map(trade => `
+                    <tr>
+                        <td>#${trade.id}</td>
+                        <td>${trade.symbol}</td>
+                        <td>
+                            <span class="badge ${trade.side === 'BUY' ? 'bg-success' : 'bg-danger'}">
+                                ${trade.side}
+                            </span>
+                        </td>
+                        <td>${trade.quantity}</td>
+                        <td>$${this.formatPrice(trade.entry_price)}</td>
+                        <td>$${this.formatPrice(trade.exit_price)}</td>
+                        <td class="${trade.pnl >= 0 ? 'pnl-positive' : 'pnl-negative'}">
+                            ${trade.pnl >= 0 ? '+' : ''}$${Math.abs(trade.pnl).toFixed(2)}
+                        </td>
+                        <td>${this.formatTime(trade.created_at)}</td>
+                        <td>${this.formatTime(trade.closed_at)}</td>
+                        <td>
+                            <span class="badge bg-secondary">${trade.strategy || 'Manual'}</span>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+            
+            renderVirtualTrades() {
+                const tbody = document.getElementById('virtualTradesBody');
+                
+                if (this.virtualTrades.length === 0) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="10" class="text-center py-5">
+                                <i class="fas fa-flask fa-3x text-secondary mb-3"></i>
+                                <p>Нет виртуальных сделок</p>
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+                
+                tbody.innerHTML = this.virtualTrades.map(trade => `
+                    <tr>
+                        <td>#V${trade.id}</td>
+                        <td>${trade.symbol}</td>
+                        <td>
+                            <span class="badge ${trade.side === 'BUY' ? 'bg-success' : 'bg-danger'}">
+                                ${trade.side}
+                            </span>
+                        </td>
+                        <td>${trade.quantity}</td>
+                        <td>$${this.formatPrice(trade.entry_price)}</td>
+                        <td>$${this.formatPrice(trade.current_price)}</td>
+                        <td class="${trade.pnl >= 0 ? 'pnl-positive' : 'pnl-negative'}">
+                            ${trade.pnl >= 0 ? '+' : ''}$${Math.abs(trade.pnl).toFixed(2)}
+                        </td>
+                        <td>${this.formatTime(trade.created_at)}</td>
+                        <td>${trade.strategy || 'Manual'}</td>
+                        <td>
+                            <button class="btn-sm-action btn-close-position" 
+                                    onclick="tradesManager.closeVirtualTrade(${trade.id})">
+                                <i class="fas fa-times"></i>
+                            </button>
+                            <button class="btn-sm-action btn-chart ms-1" 
+                                    onclick="tradesManager.convertToReal(${trade.id})">
+                                <i class="fas fa-rocket"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+            
+            updateStatistics() {
+                // Calculate statistics
+                let totalPnL = 0;
+                let activePositionsCount = this.activeTrades.length;
+                let totalVolume = 0;
+                let wins = 0;
+                let losses = 0;
+                let totalProfit = 0;
+                let totalLoss = 0;
+                
+                // Active trades
+                this.activeTrades.forEach(trade => {
+                    totalPnL += trade.pnl || 0;
+                    totalVolume += (trade.quantity * trade.current_price) || 0;
+                });
+                
+                // History trades
+                this.historyTrades.forEach(trade => {
+                    if (trade.pnl > 0) {
+                        wins++;
+                        totalProfit += trade.pnl;
+                    } else if (trade.pnl < 0) {
+                        losses++;
+                        totalLoss += Math.abs(trade.pnl);
+                    }
+                });
+                
+                const totalTrades = wins + losses;
+                const winRate = totalTrades > 0 ? (wins / totalTrades * 100) : 0;
+                const avgProfit = wins > 0 ? totalProfit / wins : 0;
+                const profitFactor = totalLoss > 0 ? totalProfit / totalLoss : totalProfit > 0 ? 999 : 0;
+                
+                // Update UI
+                document.getElementById('totalPnL').textContent = `$${totalPnL.toFixed(2)}`;
+                document.getElementById('totalPnLChange').innerHTML = `
+                    <i class="fas fa-arrow-${totalPnL >= 0 ? 'up' : 'down'} 
+                       text-${totalPnL >= 0 ? 'success' : 'danger'}"></i>
+                    <span>${totalPnL >= 0 ? '+' : ''}${(totalPnL / 10000 * 100).toFixed(2)}%</span>
+                `;
+                
+                document.getElementById('activePositions').textContent = activePositionsCount;
+                document.getElementById('totalVolume').textContent = `Объем: $${this.formatVolume(totalVolume)}`;
+                
+                document.getElementById('winRate').textContent = `${winRate.toFixed(1)}%`;
+                document.getElementById('totalTrades').textContent = `${totalTrades} сделок`;
+                
+                document.getElementById('avgProfit').textContent = `$${avgProfit.toFixed(2)}`;
+                document.getElementById('profitFactor').textContent = `PF: ${profitFactor.toFixed(2)}`;
+                
+                this.updateCharts();
+            }
+            
+            initCharts() {
+                // P&L Chart
+                const pnlCtx = document.getElementById('pnlChart').getContext('2d');
+                this.charts.pnl = new Chart(pnlCtx, {
+                    type: 'line',
+                    data: {
+                        labels: [],
+                        datasets: [{
+                            label: 'P&L',
+                            data: [],
+                            borderColor: 'rgb(75, 192, 192)',
+                            tension: 0.1,
+                            fill: false
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                grid: { color: 'rgba(255,255,255,0.1)' },
+                                ticks: { color: '#a0a9c9' }
+                            },
+                            x: {
+                                grid: { color: 'rgba(255,255,255,0.1)' },
+                                ticks: { color: '#a0a9c9' }
+                            }
+                        }
+                    }
+                });
+                
+                // Distribution Chart
+                const distCtx = document.getElementById('distributionChart').getContext('2d');
+                this.charts.distribution = new Chart(distCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: [],
+                        datasets: [{
+                            data: [],
+                            backgroundColor: [
+                                '#3273dc',
+                                '#00ff88',
+                                '#ff3860',
+                                '#ffdd57',
+                                '#ff8866'
+                            ]
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'right',
+                                labels: { color: '#a0a9c9' }
+                            }
+                        }
+                    }
+                });
+            }
+            
+            updateCharts() {
+                // Update P&L chart with history data
+                if (this.historyTrades.length > 0) {
+                    const cumulativePnL = [];
+                    let total = 0;
+                    
+                    this.historyTrades.slice(-20).forEach(trade => {
+                        total += trade.pnl || 0;
+                        cumulativePnL.push(total);
+                    });
+                    
+                    this.charts.pnl.data.labels = this.historyTrades.slice(-20).map((_, i) => `Trade ${i + 1}`);
+                    this.charts.pnl.data.datasets[0].data = cumulativePnL;
+                    this.charts.pnl.update();
+                }
+                
+                // Update distribution chart
+                const symbolCounts = {};
+                this.activeTrades.forEach(trade => {
+                    symbolCounts[trade.symbol] = (symbolCounts[trade.symbol] || 0) + 1;
+                });
+                
+                this.charts.distribution.data.labels = Object.keys(symbolCounts);
+                this.charts.distribution.data.datasets[0].data = Object.values(symbolCounts);
+                this.charts.distribution.update();
+            }
+            
+            async closeTrade(tradeId) {
+                if (!confirm('Вы уверены, что хотите закрыть эту позицию?')) return;
+                
+                try {
+                    const response = await fetch(`/api/trades/close/${tradeId}`, {
+                        method: 'POST'
+                    });
+                    
+                    if (response.ok) {
+                        await this.loadAllData();
+                        this.showNotification('Позиция закрыта успешно', 'success');
+                    } else {
+                        this.showNotification('Ошибка при закрытии позиции', 'error');
+                    }
+                } catch (error) {
+                    console.error('Error closing trade:', error);
+                    this.showNotification('Ошибка при закрытии позиции', 'error');
+                }
+            }
+            
+            modifyTrade(tradeId) {
+                const trade = this.activeTrades.find(t => t.id === tradeId);
+                if (!trade) return;
+                
+                // Show modal with trade details
+                const modalBody = document.getElementById('tradeModalBody');
+                modalBody.innerHTML = `
+                    <form id="modifyTradeForm">
+                        <input type="hidden" name="tradeId" value="${trade.id}">
+                        <div class="mb-3">
+                            <label class="form-label">Stop Loss</label>
+                            <input type="number" class="form-control" name="stopLoss" 
+                                   value="${trade.stop_loss || ''}" step="0.01">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Take Profit</label>
+                            <input type="number" class="form-control" name="takeProfit" 
+                                   value="${trade.take_profit || ''}" step="0.01">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Trailing Stop (%)</label>
+                            <input type="number" class="form-control" name="trailingStop" 
+                                   value="${trade.trailing_stop || ''}" step="0.1">
+                        </div>
+                    </form>
+                `;
+                
+                const modal = new bootstrap.Modal(document.getElementById('tradeModal'));
+                modal.show();
+            }
+            
+            async saveTradeModifications() {
+                const form = document.getElementById('modifyTradeForm');
+                const formData = new FormData(form);
+                
+                try {
+                    const response = await fetch(`/api/trades/modify/${formData.get('tradeId')}`, {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({
+                            stop_loss: formData.get('stopLoss'),
+                            take_profit: formData.get('takeProfit'),
+                            trailing_stop: formData.get('trailingStop')
+                        })
+                    });
+                    
+                    if (response.ok) {
+                        await this.loadAllData();
+                        bootstrap.Modal.getInstance(document.getElementById('tradeModal')).hide();
+                        this.showNotification('Сделка обновлена успешно', 'success');
+                    }
+                } catch (error) {
+                    console.error('Error modifying trade:', error);
+                    this.showNotification('Ошибка при обновлении сделки', 'error');
+                }
+            }
+            
+            // Utility methods
+            formatPrice(price) {
+                return parseFloat(price || 0).toFixed(2);
+            }
+            
+            formatVolume(volume) {
+                if (volume > 1e6) return (volume / 1e6).toFixed(2) + 'M';
+                if (volume > 1e3) return (volume / 1e3).toFixed(2) + 'K';
+                return volume.toFixed(0);
+            }
+            
+            formatTime(timestamp) {
+                if (!timestamp) return '-';
+                const date = new Date(timestamp);
+                return date.toLocaleString('ru-RU', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            }
+            
+            showNotification(message, type) {
+                // Simple notification (can be replaced with toast library)
+                console.log(`${type.toUpperCase()}: ${message}`);
+            }
+            
+            startAutoUpdate() {
+                this.updateInterval = setInterval(() => {
+                    this.loadActiveTrades();
+                }, 5000); // Update every 5 seconds
+            }
+            
+            handleTradeUpdate(data) {
+                // Real-time update handling
+                const tradeIndex = this.activeTrades.findIndex(t => t.id === data.id);
+                if (tradeIndex !== -1) {
+                    this.activeTrades[tradeIndex] = {...this.activeTrades[tradeIndex], ...data};
+                    this.renderActiveTrades();
+                    this.updateStatistics();
+                }
+            }
+            
+            handlePositionClosed(data) {
+                // Move from active to history
+                this.activeTrades = this.activeTrades.filter(t => t.id !== data.id);
+                this.historyTrades.unshift(data);
+                this.renderActiveTrades();
+                this.renderTradeHistory();
+                this.updateStatistics();
+            }
+            
+            // Quick action methods
+            async closeAllPositions() {
+                if (!confirm('Вы уверены, что хотите закрыть ВСЕ позиции?')) return;
+                
+                try {
+                    const response = await fetch('/api/trades/close-all', { method: 'POST' });
+                    if (response.ok) {
+                        await this.loadAllData();
+                        this.showNotification('Все позиции закрыты', 'success');
+                    }
+                } catch (error) {
+                    console.error('Error closing all positions:', error);
+                }
+            }
+            
+            async moveStopsToBreakeven() {
+                try {
+                    const response = await fetch('/api/trades/breakeven', { method: 'POST' });
+                    if (response.ok) {
+                        await this.loadAllData();
+                        this.showNotification('Стопы переведены в безубыток', 'success');
+                    }
+                } catch (error) {
+                    console.error('Error moving stops:', error);
+                }
+            }
+            
+            async enableTrailingStop() {
+                const percent = prompt('Введите процент для трейлинг стопа:', '2');
+                if (!percent) return;
+                
+                try {
+                    const response = await fetch('/api/trades/trailing', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({ percent: parseFloat(percent) })
+                    });
+                    
+                    if (response.ok) {
+                        this.showNotification('Трейлинг стоп активирован', 'success');
+                    }
+                } catch (error) {
+                    console.error('Error enabling trailing stop:', error);
+                }
+            }
+            
+            calculateRisk() {
+                // Show risk calculation modal
+                alert('Функция расчета рисков будет добавлена в следующей версии');
+            }
+            
+            openNewTradeModal() {
+                // Open new trade modal
+                alert('Функция открытия новой сделки будет добавлена в следующей версии');
+            }
+            
+            exportTrades() {
+                // Export trades to CSV
+                alert('Функция экспорта будет добавлена в следующей версии');
+            }
+        }
+        
+        // Initialize the trades manager
+        const tradesManager = new TradesManager();
+    </script>
+</body>
+</html>

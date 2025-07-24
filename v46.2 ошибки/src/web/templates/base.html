@@ -1,0 +1,234 @@
+<!-- /src/web/templates/base.html -->
+<!DOCTYPE html>
+
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Crypto Trading Bot{% endblock %}</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <!-- Toastr CSS (для уведомлений) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+    
+    <!-- Дополнительные стили страницы -->
+    {% block head %}{% endblock %}
+    
+    <style>
+        /* Базовые стили темной темы */
+        :root {
+            --bg-primary: #1a1a1a;
+            --bg-secondary: #2d2d2d;
+            --text-primary: #ffffff;
+            --text-secondary: #b0b0b0;
+            --accent-primary: #0d6efd;
+            --accent-success: #28a745;
+            --accent-danger: #dc3545;
+            --accent-warning: #ffc107;
+            --accent-info: #17a2b8;
+        }
+        
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        
+        .navbar {
+            background-color: var(--bg-secondary) !important;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .card {
+            background-color: var(--bg-secondary);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .table-dark {
+            background-color: transparent;
+        }
+        
+        .btn-primary {
+            background-color: var(--accent-primary);
+            border-color: var(--accent-primary);
+        }
+        
+        .text-muted {
+            color: var(--text-secondary) !important;
+        }
+        
+        /* Скроллбары */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: var(--bg-primary);
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #555;
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #777;
+        }
+    </style>
+</head>
+<body>
+    <!-- Навигационная панель -->
+    <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav me-auto">
+            <li class="nav-item">
+                <a class="nav-link {% if request.endpoint == 'enhanced_signals_matrix' %}active{% endif %}" href="{{ url_for('enhanced_signals_matrix') }}">
+                    <i class="fas fa-th-large"></i> Матрица сигналов
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if request.endpoint == 'trades_management' %}active{% endif %}" href="{{ url_for('trades_management') }}">
+                    <i class="fas fa-exchange-alt"></i> Управление сделками
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if request.endpoint == 'analytics_dashboard' %}active{% endif %}" href="{{ url_for('analytics_dashboard') }}">
+                    <i class="fas fa-chart-bar"></i> Аналитика
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if request.endpoint == 'dashboard' %}active{% endif %}" href="{{ url_for('dashboard') }}">
+                    <i class="fas fa-tachometer-alt"></i> Старый дашборд
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if request.endpoint == 'news' %}active{% endif %}" href="{{ url_for('news') }}">
+                    <i class="fas fa-newspaper"></i> Новости
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if request.endpoint == 'settings' %}active{% endif %}" href="{{ url_for('settings') }}">
+                    <i class="fas fa-cog"></i> Настройки
+                </a>
+            </li>
+        </ul>
+        
+        <!-- Статус бота в навбаре -->
+        <div class="navbar-text me-3">
+            <span id="navbar-bot-status">
+                <i class="fas fa-circle text-danger"></i> Бот остановлен
+            </span>
+        </div>
+        
+        <!-- Кнопка выхода если есть авторизация -->
+        {% if current_user and current_user.is_authenticated %}
+        <ul class="navbar-nav">
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
+                    <i class="fas fa-user"></i> {{ current_user.username }}
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li><a class="dropdown-item" href="/profile"><i class="fas fa-user-cog"></i> Профиль</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="/logout"><i class="fas fa-sign-out-alt"></i> Выход</a></li>
+                </ul>
+            </li>
+        </ul>
+        {% endif %}
+    </div>
+
+    <!-- Основной контент -->
+    <main class="container-fluid mt-4">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Футер -->
+    <footer class="footer mt-5 py-3 bg-dark">
+        <div class="container text-center text-muted">
+            <small>&copy; 2025 Crypto Trading Bot. Все права защищены.</small>
+        </div>
+    </footer>
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    
+    <!-- Socket.IO -->
+    <script src="https://cdn.socket.io/4.5.0/socket.io.min.js"></script>
+    
+    <!-- Toastr JS (для уведомлений) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+
+    
+    
+    <!-- Настройка Toastr -->
+    <script>
+        toastr.options = {
+            "closeButton": true,
+            "progressBar": true,
+            "positionClass": "toast-top-right",
+            "timeOut": "5000"
+        };
+    </script>
+    
+    <!-- Глобальные функции -->
+    <script>
+        // Обновление статуса бота в навбаре
+        function updateNavbarBotStatus(isRunning) {
+            const statusElement = $('#navbar-bot-status');
+            if (isRunning) {
+                statusElement.html('<i class="fas fa-circle text-success"></i> Бот активен');
+            } else {
+                statusElement.html('<i class="fas fa-circle text-danger"></i> Бот остановлен');
+            }
+        }
+        
+        // Проверка статуса при загрузке
+        $(document).ready(function() {
+            fetch('/api/bot/status')
+                .then(response => response.json())
+                .then(data => {
+                    if (data && data.is_running !== undefined) {
+                        updateNavbarBotStatus(data.is_running);
+                    }
+                })
+                .catch(error => console.error('Error loading bot status:', error));
+        });
+        
+        // Подписка на обновления через WebSocket
+        if (window.wsHandler) {
+            window.wsHandler.on('bot_status', (data) => {
+                updateNavbarBotStatus(data.is_running);
+            });
+        }
+    </script>
+    
+    <!-- Дополнительные скрипты страницы -->
+    {% block scripts %}{% endblock %}
+</body>
+</html>
